@@ -16,8 +16,8 @@ A unified Go library for cryptocurrency exchange APIs, supporting multiple excha
 ## Supported Exchanges
 
 - ✅ **OKEx** (Full native client support + adapter layer)
+- 🚧 **BitMart** (In Progress - Infrastructure ready)
 - 🚧 **Binance** (Planned)
-- 🚧 **BitMart** (Planned)
 - 🚧 **BingX** (Planned)
 
 ## Installation
@@ -28,7 +28,7 @@ go get github.com/djpken/go-exc
 
 ## Requirements
 
-- Go 1.23 or higher
+- Go 1.25 or higher
 - Dependencies managed via `go.mod`
 
 ## Quick Start
@@ -266,6 +266,13 @@ This project is licensed under the same terms as the original `go-okex` project.
 ## Disclaimer
 
 This package is provided as-is, without any express or implied warranties. The user assumes all risks associated with the use of this package. Use at your own risk.
+
+## Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - Version history and changes
+- [MIGRATION.md](MIGRATION.md) - Migration guide from go-okex
+- [Architecture Documentation](.code/ARCHITECTURE.md) - Detailed architecture design
+- [Refactoring Plan](.code/REFACTORING_PLAN.md) - Project refactoring implementation plan
 
 ## Resources
 
