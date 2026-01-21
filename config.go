@@ -11,9 +11,6 @@ type Config struct {
 	// Passphrase is the passphrase for authentication (if required)
 	Passphrase string
 
-	// TestMode indicates whether to use test/demo environment
-	TestMode bool
-
 	// Extra contains exchange-specific configuration
 	Extra map[string]interface{}
 }
@@ -23,8 +20,10 @@ type ExchangeType string
 
 // Supported exchanges
 const (
-	OKEx    ExchangeType = "okex"
-	Binance ExchangeType = "binance"
-	BitMart ExchangeType = "bitmart"
-	BingX   ExchangeType = "bingx"
+	OKX         ExchangeType = "OKX"
+	OKXTest     ExchangeType = "OKX-TEST"
+	Binance     ExchangeType = "BINANCE"
+	BitMart     ExchangeType = "BIT-MART"
+	BitMartTEST ExchangeType = "BIT-MART-Test"
+	BingX       ExchangeType = "BING-X"
 )

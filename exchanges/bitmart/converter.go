@@ -2,7 +2,6 @@ package bitmart
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	accountmodels "github.com/djpken/go-exc/exchanges/bitmart/models/account"
@@ -69,7 +68,7 @@ func (c *Converter) ConvertBalance(balance *accountmodels.Balance) *commontypes.
 	return &commontypes.Balance{
 		Currency:  balance.Currency,
 		Available: commontypes.Decimal(balance.Available),
-		Locked:    commontypes.Decimal(balance.Frozen),
+		Frozen:    commontypes.Decimal(balance.Frozen),
 		Total:     commontypes.Decimal(balance.Total),
 	}
 }
@@ -80,14 +79,14 @@ func (c *Converter) ConvertAccountBalance(balances []accountmodels.Balance) *com
 		return nil
 	}
 
-	commonBalances := make(map[string]commontypes.Balance)
+	commonBalances := make([]*commontypes.Balance, 0, len(balances))
 	for _, bal := range balances {
-		commonBalances[bal.Currency] = commontypes.Balance{
+		commonBalances = append(commonBalances, &commontypes.Balance{
 			Currency:  bal.Currency,
 			Available: commontypes.Decimal(bal.Available),
-			Locked:    commontypes.Decimal(bal.Frozen),
+			Frozen:    commontypes.Decimal(bal.Frozen),
 			Total:     commontypes.Decimal(bal.Total),
-		}
+		})
 	}
 
 	return &commontypes.AccountBalance{
@@ -103,48 +102,74 @@ func (c *Converter) ConvertTicker(ticker *marketmodels.Ticker) *commontypes.Tick
 
 	return &commontypes.Ticker{
 		Symbol:    ticker.Symbol,
-		Last:      commontypes.Decimal(ticker.LastPrice),
-		High:      commontypes.Decimal(ticker.HighPrice),
-		Low:       commontypes.Decimal(ticker.LowPrice),
-		Volume:    commontypes.Decimal(ticker.BaseVolume),
+		LastPrice: commontypes.Decimal(ticker.LastPrice),
+		High24h:   commontypes.Decimal(ticker.HighPrice),
+		Low24h:    commontypes.Decimal(ticker.LowPrice),
+		Volume24h: commontypes.Decimal(ticker.BaseVolume),
 		Timestamp: commontypes.Timestamp(time.Unix(0, ticker.Timestamp*int64(time.Millisecond))),
 		Extra: map[string]interface{}{
 			"quote_volume":   ticker.QuoteVolume,
 			"open":           ticker.OpenPrice,
-			"close":          ticker.Close,
 			"best_bid":       ticker.BestBid,
 			"best_ask":       ticker.BestAsk,
-			"price_change":   ticker.PriceChange,
+			"best_bid_size":  ticker.BestBidSize,
+			"best_ask_size":  ticker.BestAskSize,
+			"fluctuation":    ticker.Fluctuation,
 			"percent_change": ticker.PercentChange,
 		},
 	}
 }
 
 // ConvertOrderBook converts BitMart order book to common order book type
-func (c *Converter) ConvertOrderBook(ob *marketmodels.OrderBook, symbol string) *commontypes.OrderBook {
+func (c *Converter) ConvertOrderBook(ob interface{}, symbol string) *commontypes.OrderBook {
 	if ob == nil {
 		return nil
 	}
 
+	// Handle different order book types
+	type orderBookData struct {
+		Timestamp int64
+		Bids      []marketmodels.OrderBookItem
+		Asks      []marketmodels.OrderBookItem
+	}
+
+	var data orderBookData
+	switch v := ob.(type) {
+	case *marketmodels.OrderBook:
+		data.Timestamp = v.Timestamp
+		data.Bids = v.Bids
+		data.Asks = v.Asks
+	case *struct {
+		Timestamp int64                       `json:"timestamp"`
+		Bids      []marketmodels.OrderBookItem `json:"bids"`
+		Asks      []marketmodels.OrderBookItem `json:"asks"`
+	}:
+		data.Timestamp = v.Timestamp
+		data.Bids = v.Bids
+		data.Asks = v.Asks
+	default:
+		return nil
+	}
+
 	// Convert bids
-	bids := make([]commontypes.PriceLevel, len(ob.Bids))
-	for i, bid := range ob.Bids {
-		price, _ := strconv.ParseFloat(bid.Price, 64)
-		amount, _ := strconv.ParseFloat(bid.Amount, 64)
-		bids[i] = commontypes.PriceLevel{
-			Price:    price,
-			Quantity: amount,
+	bids := make([]commontypes.OrderBookLevel, len(data.Bids))
+	for i, bid := range data.Bids {
+		if len(bid) >= 2 {
+			bids[i] = commontypes.OrderBookLevel{
+				Price:    commontypes.Decimal(bid[0]),
+				Quantity: commontypes.Decimal(bid[1]),
+			}
 		}
 	}
 
 	// Convert asks
-	asks := make([]commontypes.PriceLevel, len(ob.Asks))
-	for i, ask := range ob.Asks {
-		price, _ := strconv.ParseFloat(ask.Price, 64)
-		amount, _ := strconv.ParseFloat(ask.Amount, 64)
-		asks[i] = commontypes.PriceLevel{
-			Price:    price,
-			Quantity: amount,
+	asks := make([]commontypes.OrderBookLevel, len(data.Asks))
+	for i, ask := range data.Asks {
+		if len(ask) >= 2 {
+			asks[i] = commontypes.OrderBookLevel{
+				Price:    commontypes.Decimal(ask[0]),
+				Quantity: commontypes.Decimal(ask[1]),
+			}
 		}
 	}
 
@@ -152,7 +177,7 @@ func (c *Converter) ConvertOrderBook(ob *marketmodels.OrderBook, symbol string) 
 		Symbol:    symbol,
 		Bids:      bids,
 		Asks:      asks,
-		Timestamp: commontypes.Timestamp(time.Unix(0, ob.Timestamp*int64(time.Millisecond))),
+		Timestamp: commontypes.Timestamp(time.Unix(0, data.Timestamp*int64(time.Millisecond))),
 	}
 }
 

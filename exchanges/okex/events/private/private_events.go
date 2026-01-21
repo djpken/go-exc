@@ -4,20 +4,20 @@ import (
 	"github.com/djpken/go-exc/exchanges/okex/events"
 	"github.com/djpken/go-exc/exchanges/okex/models/account"
 	"github.com/djpken/go-exc/exchanges/okex/models/trade"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
 	Account struct {
 		Arg       *events.Argument   `json:"arg"`
-		EventType types.EventType    `json:"eventType"`
+		EventType constants.EventType    `json:"eventType"`
 		CurPage   int                `json:"curPage"`
 		LastPage  bool               `json:"lastPage"`
 		Balances  []*account.Balance `json:"data"`
 	}
 	Position struct {
 		Arg       *events.Argument    `json:"arg"`
-		EventType types.EventType     `json:"eventType"`
+		EventType constants.EventType     `json:"eventType"`
 		CurPage   int                 `json:"curPage"`
 		LastPage  bool                `json:"lastPage"`
 		Positions []*account.Position `json:"data"`

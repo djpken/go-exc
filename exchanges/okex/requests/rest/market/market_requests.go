@@ -1,11 +1,11 @@
 package market
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	GetTickers struct {
 		Uly      string               `json:"uly,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	GetIndexTickers struct {
 		InstID   string `json:"instId,omitempty"`
@@ -20,7 +20,7 @@ type (
 		After  int64         `json:"after,omitempty,string"`
 		Before int64         `json:"before,omitempty,string"`
 		Limit  int64         `json:"limit,omitempty,string"`
-		Bar    types.BarSize `json:"bar,omitempty"`
+		Bar    constants.BarSize `json:"bar,omitempty"`
 	}
 	GetTrades struct {
 		InstID string `json:"instId"`

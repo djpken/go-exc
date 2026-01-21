@@ -1,6 +1,6 @@
 package private
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	Account struct {
@@ -9,16 +9,16 @@ type (
 	Position struct {
 		Uly      string               `json:"uly,omitempty"`
 		InstID   string               `json:"instId,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	Order struct {
 		Uly      string               `json:"uly,omitempty"`
 		InstID   string               `json:"instId,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	AlgoOrder struct {
 		Uly      string               `json:"uly,omitempty"`
 		InstID   string               `json:"instId,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 )

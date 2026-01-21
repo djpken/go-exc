@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/djpken/go-exc/exchanges/okex/events"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 	"github.com/gorilla/websocket"
 )
 
@@ -51,7 +51,7 @@ var DefaultRetryConfig = RetryConfig{
 
 // subscription represents a channel subscription
 type subscription struct {
-	channels []types.ChannelName
+	channels []constants.ChannelName
 	args     []map[string]string
 }
 
@@ -71,7 +71,7 @@ type ClientWs struct {
 	SystemMsgChan       chan *SystemMessage
 	SystemErrChan       chan *SystemError
 	sendChan            map[bool]chan []byte
-	url                 map[bool]types.BaseURL
+	url                 map[bool]constants.BaseURL
 	conn                map[bool]*websocket.Conn
 	dialer              *websocket.Dialer
 	apiKey              string
@@ -102,7 +102,7 @@ const (
 )
 
 // NewClient returns a pointer to a fresh ClientWs
-func NewClient(ctx context.Context, apiKey, secretKey, passphrase string, url map[bool]types.BaseURL) *ClientWs {
+func NewClient(ctx context.Context, apiKey, secretKey, passphrase string, url map[bool]constants.BaseURL) *ClientWs {
 	ctx, cancel := context.WithCancel(ctx)
 	c := &ClientWs{
 		apiKey:          apiKey,
@@ -196,14 +196,14 @@ func (c *ClientWs) Login() error {
 			"sign":       sign,
 		},
 	}
-	return c.Send(true, types.LoginOperation, args)
+	return c.Send(true, constants.LoginOperation, args)
 }
 
 // Subscribe
 // Users can choose to subscribe to one or more channels, and the total length of multiple channels cannot exceed 4096 bytes.
 //
 // https://www.okex.com/docs-v5/en/#websocket-api-subscribe
-func (c *ClientWs) Subscribe(p bool, ch []types.ChannelName, args ...map[string]string) error {
+func (c *ClientWs) Subscribe(p bool, ch []constants.ChannelName, args ...map[string]string) error {
 	chCount := max(len(ch), 1)
 	tmpArgs := make([]map[string]string, chCount*len(args))
 
@@ -221,7 +221,7 @@ func (c *ClientWs) Subscribe(p bool, ch []types.ChannelName, args ...map[string]
 		}
 	}
 
-	err := c.Send(p, types.SubscribeOperation, tmpArgs)
+	err := c.Send(p, constants.SubscribeOperation, tmpArgs)
 	if err != nil {
 		return err
 	}
@@ -240,7 +240,7 @@ func (c *ClientWs) Subscribe(p bool, ch []types.ChannelName, args ...map[string]
 // Unsubscribe into channel(s)
 //
 // https://www.okex.com/docs-v5/en/#websocket-api-unsubscribe
-func (c *ClientWs) Unsubscribe(p bool, ch []types.ChannelName, args map[string]string) error {
+func (c *ClientWs) Unsubscribe(p bool, ch []constants.ChannelName, args map[string]string) error {
 	tmpArgs := make([]map[string]string, len(ch))
 	for i, name := range ch {
 		tmpArgs[i] = make(map[string]string)
@@ -249,7 +249,7 @@ func (c *ClientWs) Unsubscribe(p bool, ch []types.ChannelName, args map[string]s
 			tmpArgs[i][k] = v
 		}
 	}
-	err := c.Send(p, types.UnsubscribeOperation, tmpArgs)
+	err := c.Send(p, constants.UnsubscribeOperation, tmpArgs)
 	if err != nil {
 		return err
 	}
@@ -282,8 +282,8 @@ func (c *ClientWs) Unsubscribe(p bool, ch []types.ChannelName, args map[string]s
 }
 
 // Send message through either connections
-func (c *ClientWs) Send(p bool, op types.Operation, args []map[string]string, extras ...map[string]string) error {
-	if op != types.LoginOperation {
+func (c *ClientWs) Send(p bool, op constants.Operation, args []map[string]string, extras ...map[string]string) error {
+	if op != constants.LoginOperation {
 		err := c.Connect(p)
 		if err == nil {
 			if p {

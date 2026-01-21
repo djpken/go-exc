@@ -1,6 +1,6 @@
 package funding
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	GetBalance struct {
@@ -12,12 +12,12 @@ type (
 		SubAcct  string             `json:"subAcct,omitempty"`
 		InstID   string             `json:"instID,omitempty"`
 		ToInstID string             `json:"instId,omitempty"`
-		Type     types.TransferType `json:"type,omitempty,string"`
-		From     types.AccountType  `json:"from,string"`
-		To       types.AccountType  `json:"to,string"`
+		Type     constants.TransferType `json:"type,omitempty,string"`
+		From     constants.AccountType  `json:"from,string"`
+		To       constants.AccountType  `json:"to,string"`
 	}
 	AssetBillsDetails struct {
-		Type   types.BillType `json:"type,string,omitempty"`
+		Type   constants.BillType `json:"type,string,omitempty"`
 		After  int64          `json:"after,string,omitempty"`
 		Before int64          `json:"before,string,omitempty"`
 		Limit  int64          `json:"limit,string,omitempty"`
@@ -31,7 +31,7 @@ type (
 		After  int64              `json:"after,omitempty,string"`
 		Before int64              `json:"before,omitempty,string"`
 		Limit  int64              `json:"limit,omitempty,string"`
-		State  types.DepositState `json:"state,omitempty,string"`
+		State  constants.DepositState `json:"state,omitempty,string"`
 	}
 	Withdrawal struct {
 		Ccy    string                      `json:"ccy"`
@@ -40,7 +40,7 @@ type (
 		Pwd    string                      `json:"pwd"`
 		Amt    float64                     `json:"amt,string"`
 		Fee    float64                     `json:"fee,string"`
-		Dest   types.WithdrawalDestination `json:"dest,string"`
+		Dest   constants.WithdrawalDestination `json:"dest,string"`
 	}
 	GetWithdrawalHistory struct {
 		Ccy    string                `json:"ccy,omitempty"`
@@ -48,7 +48,7 @@ type (
 		After  int64                 `json:"after,omitempty,string"`
 		Before int64                 `json:"before,omitempty,string"`
 		Limit  int64                 `json:"limit,omitempty,string"`
-		State  types.WithdrawalState `json:"state,omitempty,string"`
+		State  constants.WithdrawalState `json:"state,omitempty,string"`
 	}
 	PiggyBankPurchaseRedemption struct {
 		Ccy    string                `json:"ccy,omitempty"`
@@ -56,7 +56,7 @@ type (
 		After  int64                 `json:"after,omitempty,string"`
 		Before int64                 `json:"before,omitempty,string"`
 		Limit  int64                 `json:"limit,omitempty,string"`
-		State  types.WithdrawalState `json:"state,omitempty,string"`
+		State  constants.WithdrawalState `json:"state,omitempty,string"`
 	}
 	GetPiggyBankBalance struct {
 		Ccy string `json:"ccy,omitempty"`

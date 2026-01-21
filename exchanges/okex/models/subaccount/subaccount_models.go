@@ -1,7 +1,7 @@
 package subaccount
 
 import (
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
@@ -11,7 +11,7 @@ type (
 		Mobile  string         `json:"mobile,omitempty"`
 		GAuth   bool           `json:"gAuth"`
 		Enable  bool           `json:"enable"`
-		TS      types.JSONTime `json:"ts"`
+		TS      constants.JSONTime `json:"ts"`
 	}
 	APIKey struct {
 		SubAcct    string         `json:"subAcct,omitempty"`
@@ -21,16 +21,16 @@ type (
 		Passphrase string         `json:"Passphrase,omitempty"`
 		Perm       string         `json:"perm,omitempty"`
 		IP         string         `json:"ip,omitempty"`
-		TS         types.JSONTime `json:"ts,omitempty"`
+		TS         constants.JSONTime `json:"ts,omitempty"`
 	}
 	HistoryTransfer struct {
 		SubAcct string          `json:"subAcct,omitempty"`
 		Ccy     string          `json:"ccy,omitempty"`
-		BillID  types.JSONInt64 `json:"billId,omitempty"`
-		Type    types.BillType  `json:"type,omitempty,string"`
-		TS      types.JSONTime  `json:"ts,omitempty"`
+		BillID  constants.JSONInt64 `json:"billId,omitempty"`
+		Type    constants.BillType  `json:"type,omitempty,string"`
+		TS      constants.JSONTime  `json:"ts,omitempty"`
 	}
 	Transfer struct {
-		TransID types.JSONInt64 `json:"transId"`
+		TransID constants.JSONInt64 `json:"transId"`
 	}
 )

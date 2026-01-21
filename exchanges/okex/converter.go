@@ -6,7 +6,7 @@ import (
 
 	"github.com/djpken/go-exc/exchanges/okex/models/account"
 	"github.com/djpken/go-exc/exchanges/okex/models/trade"
-	okextypes "github.com/djpken/go-exc/exchanges/okex/types"
+	okexconstants "github.com/djpken/go-exc/exchanges/okex/constants"
 	commontypes "github.com/djpken/go-exc/types"
 )
 
@@ -128,31 +128,56 @@ func (c *Converter) ConvertPosition(okexPos *account.Position) *commontypes.Posi
 }
 
 // ConvertOrderSide converts common order side to OKEx order side
-func (c *Converter) ConvertOrderSide(side string) okextypes.OrderSide {
+func (c *Converter) ConvertOrderSide(side string) okexconstants.OrderSide {
 	switch side {
 	case "buy":
-		return okextypes.OrderBuy
+		return okexconstants.OrderBuy
 	case "sell":
-		return okextypes.OrderSell
+		return okexconstants.OrderSell
 	default:
-		return okextypes.OrderBuy
+		return okexconstants.OrderBuy
 	}
 }
 
 // ConvertOrderType converts common order type to OKEx order type
-func (c *Converter) ConvertOrderType(orderType string) okextypes.OrderType {
+func (c *Converter) ConvertOrderType(orderType string) okexconstants.OrderType {
 	switch orderType {
 	case "market":
-		return okextypes.OrderMarket
+		return okexconstants.OrderMarket
 	case "limit":
-		return okextypes.OrderLimit
+		return okexconstants.OrderLimit
 	case "post_only":
-		return okextypes.OrderPostOnly
+		return okexconstants.OrderPostOnly
 	case "fok":
-		return okextypes.OrderFOK
+		return okexconstants.OrderFOK
 	case "ioc":
-		return okextypes.OrderIOC
+		return okexconstants.OrderIOC
 	default:
-		return okextypes.OrderLimit
+		return okexconstants.OrderLimit
+	}
+}
+
+// ConvertAccountConfig converts OKEx account config to common AccountConfig type
+func (c *Converter) ConvertAccountConfig(okexConfig *account.Config) *commontypes.AccountConfig {
+	if okexConfig == nil {
+		return nil
+	}
+
+	// Convert position mode
+	posMode := "net_mode"
+	if okexConfig.PosMode == okexconstants.PosModeType("long_short_mode") {
+		posMode = "long_short_mode"
+	}
+
+	return &commontypes.AccountConfig{
+		UID:          okexConfig.UID,
+		Level:        okexConfig.Level,
+		AutoLoan:     okexConfig.AutoLoan,
+		PositionMode: posMode,
+		Extra: map[string]interface{}{
+			"levelTmp":   okexConfig.LevelTmp,
+			"acctLv":     okexConfig.AcctLv,
+			"greeksType": okexConfig.GreeksType,
+		},
 	}
 }

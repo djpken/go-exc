@@ -2,29 +2,24 @@ package market
 
 // Ticker represents ticker information
 type Ticker struct {
-	Symbol       string `json:"symbol"`
-	LastPrice    string `json:"last_price"`
-	QuoteVolume  string `json:"quote_volume_24h"`
-	BaseVolume   string `json:"base_volume_24h"`
-	HighPrice    string `json:"high_24h"`
-	LowPrice     string `json:"low_24h"`
-	OpenPrice    string `json:"open_24h"`
-	Close        string `json:"close_24h"`
-	BestBid      string `json:"best_bid"`
-	BestBidSize  string `json:"best_bid_size"`
-	BestAsk      string `json:"best_ask"`
-	BestAskSize  string `json:"best_ask_size"`
-	Timestamp    int64  `json:"timestamp"`
-	PriceChange  string `json:"price_change_24h"`
+	Symbol        string `json:"symbol"`
+	LastPrice     string `json:"last"`
+	QuoteVolume   string `json:"qv_24h"`
+	BaseVolume    string `json:"v_24h"`
+	HighPrice     string `json:"high_24h"`
+	LowPrice      string `json:"low_24h"`
+	OpenPrice     string `json:"open_24h"`
+	BestBid       string `json:"bid_px"`
+	BestBidSize   string `json:"bid_sz"`
+	BestAsk       string `json:"ask_px"`
+	BestAskSize   string `json:"ask_sz"`
+	Timestamp     int64  `json:"ts,string"`
+	Fluctuation   string `json:"fluctuation"`
 	PercentChange string `json:"percent_change_24h"`
 }
 
-// OrderBookItem represents a single order book entry
-type OrderBookItem struct {
-	Price  string `json:"price"`
-	Amount string `json:"amount"`
-	Count  string `json:"count"`
-}
+// OrderBookItem represents a single order book entry as [price, amount]
+type OrderBookItem []string
 
 // OrderBook represents order book data
 type OrderBook struct {

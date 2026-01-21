@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
@@ -18,29 +18,29 @@ type (
 	TakerVolume struct {
 		SellVol float64
 		BuyVol  float64
-		TS      types.JSONTime
+		TS      constants.JSONTime
 	}
 	Ratio struct {
 		Ratio float64
-		TS    types.JSONTime
+		TS    constants.JSONTime
 	}
 	InterestAndVolumeRatio struct {
 		Oi  float64
 		Vol float64
-		TS  types.JSONTime
+		TS  constants.JSONTime
 	}
 	PutCallRatio struct {
 		OiRatio  float64
 		VolRatio float64
-		TS       types.JSONTime
+		TS       constants.JSONTime
 	}
 	InterestAndVolumeExpiry struct {
 		CallOI  float64
 		PutOI   float64
 		CallVol float64
 		PutVol  float64
-		ExpTime types.JSONTime
-		TS      types.JSONTime
+		ExpTime constants.JSONTime
+		TS      constants.JSONTime
 	}
 	InterestAndVolumeStrike struct {
 		Strike  float64
@@ -48,7 +48,7 @@ type (
 		PutOI   float64
 		CallVol float64
 		PutVol  float64
-		TS      types.JSONTime
+		TS      constants.JSONTime
 	}
 	TakerFlow struct {
 		CallBuyVol   float64
@@ -57,7 +57,7 @@ type (
 		PutSellVol   float64
 		CallBlockVol float64
 		PutBlockVol  float64
-		TS           types.JSONTime
+		TS           constants.JSONTime
 	}
 )
 

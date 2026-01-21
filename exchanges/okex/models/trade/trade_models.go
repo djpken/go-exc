@@ -1,7 +1,7 @@
 package trade
 
 import (
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
@@ -9,25 +9,25 @@ type (
 		ClOrdID string            `json:"clOrdId"`
 		Tag     string            `json:"tag"`
 		SMsg    string            `json:"sMsg"`
-		SCode   types.JSONInt64   `json:"sCode"`
-		OrdID   types.JSONFloat64 `json:"ordId"`
+		SCode   constants.JSONInt64   `json:"sCode"`
+		OrdID   constants.JSONFloat64 `json:"ordId"`
 	}
 	CancelOrder struct {
 		OrdID   string            `json:"ordId"`
 		ClOrdID string            `json:"clOrdId"`
 		SMsg    string            `json:"sMsg"`
-		SCode   types.JSONFloat64 `json:"sCode"`
+		SCode   constants.JSONFloat64 `json:"sCode"`
 	}
 	AmendOrder struct {
 		OrdID   string            `json:"ordId"`
 		ClOrdID string            `json:"clOrdId"`
 		ReqID   string            `json:"reqId"`
 		SMsg    string            `json:"sMsg"`
-		SCode   types.JSONFloat64 `json:"sCode"`
+		SCode   constants.JSONFloat64 `json:"sCode"`
 	}
 	ClosePosition struct {
 		InstID  string             `json:"instId"`
-		PosSide types.PositionSide `json:"posSide"`
+		PosSide constants.PositionSide `json:"posSide"`
 		Tag     string             `json:"tag"`
 	}
 	Order struct {
@@ -40,30 +40,30 @@ type (
 		Category    string               `json:"category"`
 		FeeCcy      string               `json:"feeCcy"`
 		RebateCcy   string               `json:"rebateCcy"`
-		Px          types.JSONFloat64    `json:"px"`
-		Sz          types.JSONFloat64    `json:"sz"`
-		Pnl         types.JSONFloat64    `json:"pnl"`
-		AccFillSz   types.JSONFloat64    `json:"accFillSz"`
-		FillPx      types.JSONFloat64    `json:"fillPx"`
-		FillSz      types.JSONFloat64    `json:"fillSz"`
-		FillTime    types.JSONFloat64    `json:"fillTime"`
-		AvgPx       types.JSONFloat64    `json:"avgPx"`
-		Lever       types.JSONFloat64    `json:"lever"`
-		TpTriggerPx types.JSONFloat64    `json:"tpTriggerPx"`
-		TpOrdPx     types.JSONFloat64    `json:"tpOrdPx"`
-		SlTriggerPx types.JSONFloat64    `json:"slTriggerPx"`
-		SlOrdPx     types.JSONFloat64    `json:"slOrdPx"`
-		Fee         types.JSONFloat64    `json:"fee"`
-		Rebate      types.JSONFloat64    `json:"rebate"`
-		State       types.OrderState     `json:"state"`
-		TdMode      types.TradeMode      `json:"tdMode"`
-		PosSide     types.PositionSide   `json:"posSide"`
-		Side        types.OrderSide      `json:"side"`
-		OrdType     types.OrderType      `json:"ordType"`
-		InstType    types.InstrumentType `json:"instType"`
-		TgtCcy      types.QuantityType   `json:"tgtCcy"`
-		UTime       types.JSONTime       `json:"uTime"`
-		CTime       types.JSONTime       `json:"cTime"`
+		Px          constants.JSONFloat64    `json:"px"`
+		Sz          constants.JSONFloat64    `json:"sz"`
+		Pnl         constants.JSONFloat64    `json:"pnl"`
+		AccFillSz   constants.JSONFloat64    `json:"accFillSz"`
+		FillPx      constants.JSONFloat64    `json:"fillPx"`
+		FillSz      constants.JSONFloat64    `json:"fillSz"`
+		FillTime    constants.JSONFloat64    `json:"fillTime"`
+		AvgPx       constants.JSONFloat64    `json:"avgPx"`
+		Lever       constants.JSONFloat64    `json:"lever"`
+		TpTriggerPx constants.JSONFloat64    `json:"tpTriggerPx"`
+		TpOrdPx     constants.JSONFloat64    `json:"tpOrdPx"`
+		SlTriggerPx constants.JSONFloat64    `json:"slTriggerPx"`
+		SlOrdPx     constants.JSONFloat64    `json:"slOrdPx"`
+		Fee         constants.JSONFloat64    `json:"fee"`
+		Rebate      constants.JSONFloat64    `json:"rebate"`
+		State       constants.OrderState     `json:"state"`
+		TdMode      constants.TradeMode      `json:"tdMode"`
+		PosSide     constants.PositionSide   `json:"posSide"`
+		Side        constants.OrderSide      `json:"side"`
+		OrdType     constants.OrderType      `json:"ordType"`
+		InstType    constants.InstrumentType `json:"instType"`
+		TgtCcy      constants.QuantityType   `json:"tgtCcy"`
+		UTime       constants.JSONTime       `json:"uTime"`
+		CTime       constants.JSONTime       `json:"cTime"`
 	}
 	TransactionDetail struct {
 		InstID   string               `json:"instId"`
@@ -72,25 +72,25 @@ type (
 		ClOrdID  string               `json:"clOrdId"`
 		BillID   string               `json:"billId"`
 		Tag      string               `json:"tag"`
-		FillPx   types.JSONFloat64    `json:"fillPx"`
-		FillSz   types.JSONFloat64    `json:"fillSz"`
+		FillPx   constants.JSONFloat64    `json:"fillPx"`
+		FillSz   constants.JSONFloat64    `json:"fillSz"`
 		FeeCcy   string               `json:"feeCcy"`
-		Fee      types.JSONFloat64    `json:"fee"`
-		InstType types.InstrumentType `json:"instType"`
-		Side     types.OrderSide      `json:"side"`
-		PosSide  types.PositionSide   `json:"posSide"`
-		ExecType types.OrderFlowType  `json:"execType"`
-		TS       types.JSONTime       `json:"ts"`
+		Fee      constants.JSONFloat64    `json:"fee"`
+		InstType constants.InstrumentType `json:"instType"`
+		Side     constants.OrderSide      `json:"side"`
+		PosSide  constants.PositionSide   `json:"posSide"`
+		ExecType constants.OrderFlowType  `json:"execType"`
+		TS       constants.JSONTime       `json:"ts"`
 	}
 	PlaceAlgoOrder struct {
 		AlgoID string          `json:"algoId"`
 		SMsg   string          `json:"sMsg"`
-		SCode  types.JSONInt64 `json:"sCode"`
+		SCode  constants.JSONInt64 `json:"sCode"`
 	}
 	CancelAlgoOrder struct {
 		AlgoID string          `json:"algoId"`
 		SMsg   string          `json:"sMsg"`
-		SCode  types.JSONInt64 `json:"sCode"`
+		SCode  constants.JSONInt64 `json:"sCode"`
 	}
 	AlgoOrder struct {
 		InstID       string               `json:"instId"`
@@ -104,38 +104,38 @@ type (
 		FeeCcy       string               `json:"feeCcy"`
 		RebateCcy    string               `json:"rebateCcy"`
 		TimeInterval string               `json:"timeInterval"`
-		Px           types.JSONFloat64    `json:"px"`
-		PxVar        types.JSONFloat64    `json:"pxVar"`
-		PxSpread     types.JSONFloat64    `json:"pxSpread"`
-		PxLimit      types.JSONFloat64    `json:"pxLimit"`
-		Sz           types.JSONFloat64    `json:"sz"`
-		SzLimit      types.JSONFloat64    `json:"szLimit"`
-		ActualSz     types.JSONFloat64    `json:"actualSz"`
-		ActualPx     types.JSONFloat64    `json:"actualPx"`
-		Pnl          types.JSONFloat64    `json:"pnl"`
-		AccFillSz    types.JSONFloat64    `json:"accFillSz"`
-		FillPx       types.JSONFloat64    `json:"fillPx"`
-		FillSz       types.JSONFloat64    `json:"fillSz"`
-		FillTime     types.JSONFloat64    `json:"fillTime"`
-		AvgPx        types.JSONFloat64    `json:"avgPx"`
-		Lever        types.JSONFloat64    `json:"lever"`
-		TpTriggerPx  types.JSONFloat64    `json:"tpTriggerPx"`
-		TpOrdPx      types.JSONFloat64    `json:"tpOrdPx"`
-		SlTriggerPx  types.JSONFloat64    `json:"slTriggerPx"`
-		SlOrdPx      types.JSONFloat64    `json:"slOrdPx"`
-		OrdPx        types.JSONFloat64    `json:"ordPx"`
-		Fee          types.JSONFloat64    `json:"fee"`
-		Rebate       types.JSONFloat64    `json:"rebate"`
-		State        types.OrderState     `json:"state"`
-		TdMode       types.TradeMode      `json:"tdMode"`
-		ActualSide   types.PositionSide   `json:"actualSide"`
-		PosSide      types.PositionSide   `json:"posSide"`
-		Side         types.OrderSide      `json:"side"`
-		OrdType      types.AlgoOrderType  `json:"ordType"`
-		InstType     types.InstrumentType `json:"instType"`
-		TgtCcy       types.QuantityType   `json:"tgtCcy"`
-		CTime        types.JSONTime       `json:"cTime"`
-		TriggerTime  types.JSONTime       `json:"triggerTime"`
+		Px           constants.JSONFloat64    `json:"px"`
+		PxVar        constants.JSONFloat64    `json:"pxVar"`
+		PxSpread     constants.JSONFloat64    `json:"pxSpread"`
+		PxLimit      constants.JSONFloat64    `json:"pxLimit"`
+		Sz           constants.JSONFloat64    `json:"sz"`
+		SzLimit      constants.JSONFloat64    `json:"szLimit"`
+		ActualSz     constants.JSONFloat64    `json:"actualSz"`
+		ActualPx     constants.JSONFloat64    `json:"actualPx"`
+		Pnl          constants.JSONFloat64    `json:"pnl"`
+		AccFillSz    constants.JSONFloat64    `json:"accFillSz"`
+		FillPx       constants.JSONFloat64    `json:"fillPx"`
+		FillSz       constants.JSONFloat64    `json:"fillSz"`
+		FillTime     constants.JSONFloat64    `json:"fillTime"`
+		AvgPx        constants.JSONFloat64    `json:"avgPx"`
+		Lever        constants.JSONFloat64    `json:"lever"`
+		TpTriggerPx  constants.JSONFloat64    `json:"tpTriggerPx"`
+		TpOrdPx      constants.JSONFloat64    `json:"tpOrdPx"`
+		SlTriggerPx  constants.JSONFloat64    `json:"slTriggerPx"`
+		SlOrdPx      constants.JSONFloat64    `json:"slOrdPx"`
+		OrdPx        constants.JSONFloat64    `json:"ordPx"`
+		Fee          constants.JSONFloat64    `json:"fee"`
+		Rebate       constants.JSONFloat64    `json:"rebate"`
+		State        constants.OrderState     `json:"state"`
+		TdMode       constants.TradeMode      `json:"tdMode"`
+		ActualSide   constants.PositionSide   `json:"actualSide"`
+		PosSide      constants.PositionSide   `json:"posSide"`
+		Side         constants.OrderSide      `json:"side"`
+		OrdType      constants.AlgoOrderType  `json:"ordType"`
+		InstType     constants.InstrumentType `json:"instType"`
+		TgtCcy       constants.QuantityType   `json:"tgtCcy"`
+		CTime        constants.JSONTime       `json:"cTime"`
+		TriggerTime  constants.JSONTime       `json:"triggerTime"`
 	}
 	OrderPreCheck struct {
 		//TODO

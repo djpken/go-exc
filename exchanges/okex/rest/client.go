@@ -13,7 +13,7 @@ import (
 
 	requests "github.com/djpken/go-exc/exchanges/okex/requests/rest/public"
 	responses "github.com/djpken/go-exc/exchanges/okex/responses/public_data"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 	"github.com/djpken/go-exc/exchanges/okex/utils"
 )
 
@@ -29,13 +29,13 @@ type ClientRest struct {
 	apiKey      string
 	secretKey   []byte
 	passphrase  string
-	destination types.Destination
-	baseURL     types.BaseURL
+	destination constants.Destination
+	baseURL     constants.BaseURL
 	client      *http.Client
 }
 
 // NewClient returns a pointer to a fresh ClientRest
-func NewClient(apiKey, secretKey, passphrase string, baseURL types.BaseURL, destination types.Destination) *ClientRest {
+func NewClient(apiKey, secretKey, passphrase string, baseURL constants.BaseURL, destination constants.Destination) *ClientRest {
 	c := &ClientRest{
 		apiKey:      apiKey,
 		secretKey:   []byte(secretKey),
@@ -104,7 +104,7 @@ func (c *ClientRest) Do(method, path string, private bool, params ...map[string]
 		r.Header.Add("OK-ACCESS-SIGN", sign)
 		r.Header.Add("OK-ACCESS-TIMESTAMP", timestamp)
 	}
-	if c.destination == types.DemoServer {
+	if c.destination == constants.DemoServer {
 		r.Header.Add("x-simulated-trading", "1")
 	}
 	return c.client.Do(r)

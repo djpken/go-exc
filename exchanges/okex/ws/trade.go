@@ -2,7 +2,7 @@ package ws
 
 import (
 	requests "github.com/djpken/go-exc/exchanges/okex/requests/ws/trade"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 	"github.com/djpken/go-exc/exchanges/okex/utils"
 )
 
@@ -28,9 +28,9 @@ func NewTrade(c *ClientWs) *Trade {
 // https://www.okex.com/docs-v5/en/#websocket-api-trade-place-multiple-orders
 func (c *Trade) PlaceOrder(req ...requests.PlaceOrder) error {
 	tmpArgs := make([]map[string]string, len(req))
-	op := types.OrderOperation
+	op := constants.OrderOperation
 	if len(req) > 1 {
-		op = types.BatchOrderOperation
+		op = constants.BatchOrderOperation
 	}
 	for i, order := range req {
 		tmpArgs[i] = utils.S2M(order)
@@ -48,9 +48,9 @@ func (c *Trade) PlaceOrder(req ...requests.PlaceOrder) error {
 // https://www.okex.com/docs-v5/en/#websocket-api-trade-cancel-multiple-orders
 func (c *Trade) CancelOrder(req ...requests.CancelOrder) error {
 	tmpArgs := make([]map[string]string, len(req))
-	op := types.CancelOrderOperation
+	op := constants.CancelOrderOperation
 	if len(req) > 1 {
-		op = types.BatchCancelOrderOperation
+		op = constants.BatchCancelOrderOperation
 	}
 	for i, order := range req {
 		tmpArgs[i] = utils.S2M(order)
@@ -68,9 +68,9 @@ func (c *Trade) CancelOrder(req ...requests.CancelOrder) error {
 // https://www.okex.com/docs-v5/en/#websocket-api-trade-amend-multiple-orders
 func (c *Trade) AmendOrder(req ...requests.AmendOrder) error {
 	tmpArgs := make([]map[string]string, len(req))
-	op := types.AmendOrderOperation
+	op := constants.AmendOrderOperation
 	if len(req) > 1 {
-		op = types.BatchAmendOrderOperation
+		op = constants.BatchAmendOrderOperation
 	}
 	for i, order := range req {
 		tmpArgs[i] = utils.S2M(order)

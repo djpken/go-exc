@@ -1,6 +1,6 @@
 package subaccount
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	ViewList struct {
@@ -16,7 +16,7 @@ type (
 		Label      string             `json:"label"`
 		Passphrase string             `json:"Passphrase"`
 		IP         []string           `json:"ip,omitempty"`
-		Perm       types.APIKeyAccess `json:"perm,omitempty"`
+		Perm       constants.APIKeyAccess `json:"perm,omitempty"`
 	}
 	QueryAPIKey struct {
 		APIKey  string `json:"apiKey"`
@@ -36,14 +36,14 @@ type (
 		After   int64              `json:"after,omitempty,string"`
 		Before  int64              `json:"before,omitempty,string"`
 		Limit   int64              `json:"limit,omitempty,string"`
-		Type    types.TransferType `json:"type,omitempty,string"`
+		Type    constants.TransferType `json:"type,omitempty,string"`
 	}
 	ManageTransfers struct {
 		Ccy            string            `json:"ccy"`
 		FromSubAccount string            `json:"fromSubAccount"`
 		ToSubAccount   string            `json:"tiSubAccount"`
 		Amt            float64           `json:"amt,string"`
-		From           types.AccountType `json:"from,string"`
-		To             types.AccountType `json:"to,string"`
+		From           constants.AccountType `json:"from,string"`
+		To             constants.AccountType `json:"to,string"`
 	}
 )

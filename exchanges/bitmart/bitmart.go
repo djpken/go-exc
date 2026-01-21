@@ -5,6 +5,7 @@ import (
 
 	"github.com/djpken/go-exc/exchanges/bitmart/rest"
 	"github.com/djpken/go-exc/exchanges/bitmart/ws"
+	commontypes "github.com/djpken/go-exc/types"
 )
 
 // BitMartExchange implements the Exchange interface for BitMart
@@ -73,4 +74,58 @@ func (e *BitMartExchange) GetNativeRest() *rest.ClientRest {
 // GetNativeWs returns the native WebSocket client for advanced usage
 func (e *BitMartExchange) GetNativeWs() *ws.ClientWs {
 	return e.client.Ws
+}
+
+// ========== Unified API Implementation ==========
+// 以下方法实现统一的跨交易所接口
+
+// GetConfig gets account configuration
+// BitMart does not support this feature
+func (e *BitMartExchange) GetConfig(ctx context.Context) (*commontypes.AccountConfig, error) {
+	return nil, commontypes.ErrNotSupported
+}
+
+// GetTicker gets ticker information
+func (e *BitMartExchange) GetTicker(ctx context.Context, symbol string) (*commontypes.Ticker, error) {
+	return e.restAPI.Market().GetTicker(ctx, symbol)
+}
+
+// GetOrderBook gets order book
+func (e *BitMartExchange) GetOrderBook(ctx context.Context, symbol string, depth int) (*commontypes.OrderBook, error) {
+	return e.restAPI.Market().GetOrderBook(ctx, symbol, depth)
+}
+
+// GetBalance gets account balance
+func (e *BitMartExchange) GetBalance(ctx context.Context, currencies ...string) (*commontypes.AccountBalance, error) {
+	return e.restAPI.Account().GetBalance(ctx)
+}
+
+// GetPositions gets account positions
+func (e *BitMartExchange) GetPositions(ctx context.Context, symbols ...string) ([]*commontypes.Position, error) {
+	return e.restAPI.Account().GetPositions(ctx)
+}
+
+// PlaceOrder places a new order
+func (e *BitMartExchange) PlaceOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.Order, error) {
+	return e.restAPI.Trade().PlaceOrder(ctx, req.Symbol, req.Side, req.Type, req.Quantity, req.Price, req.Extra)
+}
+
+// CancelOrder cancels an existing order
+func (e *BitMartExchange) CancelOrder(ctx context.Context, req commontypes.CancelOrderRequest) error {
+	return e.restAPI.Trade().CancelOrder(ctx, req.Symbol, req.OrderID, req.Extra)
+}
+
+// GetOrder gets order details
+func (e *BitMartExchange) GetOrder(ctx context.Context, req commontypes.GetOrderRequest) (*commontypes.Order, error) {
+	return e.restAPI.Trade().GetOrder(ctx, req.Symbol, req.OrderID, req.Extra)
+}
+
+// GetDepositAddress gets deposit address
+func (e *BitMartExchange) GetDepositAddress(ctx context.Context, currency string) (string, error) {
+	return e.restAPI.Funding().GetDepositAddress(ctx, currency)
+}
+
+// Withdraw initiates a withdrawal
+func (e *BitMartExchange) Withdraw(ctx context.Context, req commontypes.WithdrawRequest) (string, error) {
+	return e.restAPI.Funding().Withdraw(ctx, req.Currency, req.Amount, req.Address, req.Tag, req.Extra)
 }

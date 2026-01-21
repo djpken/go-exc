@@ -1,7 +1,7 @@
 package trade
 
 import (
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
@@ -14,11 +14,11 @@ type (
 		ReduceOnly bool               `json:"reduceOnly,omitempty"`
 		Sz         float64            `json:"sz,string"`
 		Px         float64            `json:"px,omitempty,string"`
-		TdMode     types.TradeMode    `json:"tdMode"`
-		Side       types.OrderSide    `json:"side"`
-		PosSide    types.PositionSide `json:"posSide,omitempty"`
-		OrdType    types.OrderType    `json:"ordType"`
-		TgtCcy     types.QuantityType `json:"tgtCcy,omitempty"`
+		TdMode     constants.TradeMode    `json:"tdMode"`
+		Side       constants.OrderSide    `json:"side"`
+		PosSide    constants.PositionSide `json:"posSide,omitempty"`
+		OrdType    constants.OrderType    `json:"ordType"`
+		TgtCcy     constants.QuantityType `json:"tgtCcy,omitempty"`
 	}
 	CancelOrder struct {
 		ID      string `json:"-"`
@@ -39,8 +39,8 @@ type (
 	ClosePosition struct {
 		InstID  string             `json:"instId"`
 		Ccy     string             `json:"ccy,omitempty"`
-		PosSide types.PositionSide `json:"posSide,omitempty"`
-		MgnMode types.MarginMode   `json:"mgnMode"`
+		PosSide constants.PositionSide `json:"posSide,omitempty"`
+		MgnMode constants.MarginMode   `json:"mgnMode"`
 		Tag     string             `json:"tag,omitempty"`
 	}
 	OrderDetails struct {
@@ -54,9 +54,9 @@ type (
 		After    float64              `json:"after,omitempty,string"`
 		Before   float64              `json:"before,omitempty,string"`
 		Limit    float64              `json:"limit,omitempty,string"`
-		InstType types.InstrumentType `json:"instType,omitempty"`
-		OrdType  types.OrderType      `json:"ordType,omitempty"`
-		State    types.OrderState     `json:"state,omitempty"`
+		InstType constants.InstrumentType `json:"instType,omitempty"`
+		OrdType  constants.OrderType      `json:"ordType,omitempty"`
+		State    constants.OrderState     `json:"state,omitempty"`
 	}
 	TransactionDetails struct {
 		Uly      string               `json:"uly,omitempty"`
@@ -65,18 +65,18 @@ type (
 		After    float64              `json:"after,omitempty,string"`
 		Before   float64              `json:"before,omitempty,string"`
 		Limit    float64              `json:"limit,omitempty,string"`
-		InstType types.InstrumentType `json:"instType,omitempty"`
+		InstType constants.InstrumentType `json:"instType,omitempty"`
 	}
 	PlaceAlgoOrder struct {
 		InstID     string              `json:"instId"`
-		TdMode     types.TradeMode     `json:"tdMode"`
+		TdMode     constants.TradeMode     `json:"tdMode"`
 		Ccy        string              `json:"ccy,omitempty"`
-		Side       types.OrderSide     `json:"side"`
-		PosSide    types.PositionSide  `json:"posSide,omitempty"`
-		OrdType    types.AlgoOrderType `json:"ordType"`
+		Side       constants.OrderSide     `json:"side"`
+		PosSide    constants.PositionSide  `json:"posSide,omitempty"`
+		OrdType    constants.AlgoOrderType `json:"ordType"`
 		Sz         int64               `json:"sz,string"`
 		ReduceOnly bool                `json:"reduceOnly,omitempty"`
-		TgtCcy     types.QuantityType  `json:"tgtCcy,omitempty"`
+		TgtCcy     constants.QuantityType  `json:"tgtCcy,omitempty"`
 		StopOrder
 		TriggerOrder
 		IcebergOrder
@@ -107,14 +107,14 @@ type (
 		AlgoID string `json:"AlgoId"`
 	}
 	AlgoOrderList struct {
-		InstType types.InstrumentType `json:"instType,omitempty"`
+		InstType constants.InstrumentType `json:"instType,omitempty"`
 		Uly      string               `json:"uly,omitempty"`
 		InstID   string               `json:"instId,omitempty"`
 		After    float64              `json:"after,omitempty,string"`
 		Before   float64              `json:"before,omitempty,string"`
 		Limit    float64              `json:"limit,omitempty,string"`
-		OrdType  types.AlgoOrderType  `json:"ordType,omitempty"`
-		State    types.OrderState     `json:"state,omitempty"`
+		OrdType  constants.AlgoOrderType  `json:"ordType,omitempty"`
+		State    constants.OrderState     `json:"state,omitempty"`
 	}
 	OrderPreCheck struct {
 		ID         string             `json:"-"`
@@ -123,10 +123,10 @@ type (
 		ReduceOnly bool               `json:"reduceOnly,omitempty"`
 		Sz         float64            `json:"sz,string"`
 		Px         float64            `json:"px,omitempty,string"`
-		TdMode     types.TradeMode    `json:"tdMode"`
-		Side       types.OrderSide    `json:"side"`
-		PosSide    types.PositionSide `json:"posSide,omitempty"`
-		OrdType    types.OrderType    `json:"ordType"`
-		TgtCcy     types.QuantityType `json:"tgtCcy,omitempty"`
+		TdMode     constants.TradeMode    `json:"tdMode"`
+		Side       constants.OrderSide    `json:"side"`
+		PosSide    constants.PositionSide `json:"posSide,omitempty"`
+		OrdType    constants.OrderType    `json:"ordType"`
+		TgtCcy     constants.QuantityType `json:"tgtCcy,omitempty"`
 	}
 )

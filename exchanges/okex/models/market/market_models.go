@@ -6,48 +6,48 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
 	Ticker struct {
 		InstID    string               `json:"instId"`
-		Last      types.JSONFloat64    `json:"last"`
-		LastSz    types.JSONFloat64    `json:"lastSz"`
-		AskPx     types.JSONFloat64    `json:"askPx"`
-		AskSz     types.JSONFloat64    `json:"askSz"`
-		BidPx     types.JSONFloat64    `json:"bidPx"`
-		BidSz     types.JSONFloat64    `json:"bidSz"`
-		Open24h   types.JSONFloat64    `json:"open24h"`
-		High24h   types.JSONFloat64    `json:"high24h"`
-		Low24h    types.JSONFloat64    `json:"low24h"`
-		VolCcy24h types.JSONFloat64    `json:"volCcy24h"`
-		Vol24h    types.JSONFloat64    `json:"vol24h"`
-		SodUtc0   types.JSONFloat64    `json:"sodUtc0"`
-		SodUtc8   types.JSONFloat64    `json:"sodUtc8"`
-		InstType  types.InstrumentType `json:"instType"`
-		TS        types.JSONTime       `json:"ts"`
+		Last      constants.JSONFloat64    `json:"last"`
+		LastSz    constants.JSONFloat64    `json:"lastSz"`
+		AskPx     constants.JSONFloat64    `json:"askPx"`
+		AskSz     constants.JSONFloat64    `json:"askSz"`
+		BidPx     constants.JSONFloat64    `json:"bidPx"`
+		BidSz     constants.JSONFloat64    `json:"bidSz"`
+		Open24h   constants.JSONFloat64    `json:"open24h"`
+		High24h   constants.JSONFloat64    `json:"high24h"`
+		Low24h    constants.JSONFloat64    `json:"low24h"`
+		VolCcy24h constants.JSONFloat64    `json:"volCcy24h"`
+		Vol24h    constants.JSONFloat64    `json:"vol24h"`
+		SodUtc0   constants.JSONFloat64    `json:"sodUtc0"`
+		SodUtc8   constants.JSONFloat64    `json:"sodUtc8"`
+		InstType  constants.InstrumentType `json:"instType"`
+		TS        constants.JSONTime       `json:"ts"`
 	}
 	IndexTicker struct {
 		InstID  string            `json:"instId"`
-		IdxPx   types.JSONFloat64 `json:"idxPx"`
-		High24h types.JSONFloat64 `json:"high24h"`
-		Low24h  types.JSONFloat64 `json:"low24h"`
-		Open24h types.JSONFloat64 `json:"open24h"`
-		SodUtc0 types.JSONFloat64 `json:"sodUtc0"`
-		SodUtc8 types.JSONFloat64 `json:"sodUtc8"`
-		TS      types.JSONTime    `json:"ts"`
+		IdxPx   constants.JSONFloat64 `json:"idxPx"`
+		High24h constants.JSONFloat64 `json:"high24h"`
+		Low24h  constants.JSONFloat64 `json:"low24h"`
+		Open24h constants.JSONFloat64 `json:"open24h"`
+		SodUtc0 constants.JSONFloat64 `json:"sodUtc0"`
+		SodUtc8 constants.JSONFloat64 `json:"sodUtc8"`
+		TS      constants.JSONTime    `json:"ts"`
 	}
 	OrderBook struct {
 		Asks []*OrderBookEntity `json:"asks"`
 		Bids []*OrderBookEntity `json:"bids"`
-		TS   types.JSONTime     `json:"ts"`
+		TS   constants.JSONTime     `json:"ts"`
 	}
 	OrderBookWs struct {
 		Asks     []*OrderBookEntity `json:"asks"`
 		Bids     []*OrderBookEntity `json:"bids"`
 		Checksum int                `json:"checksum"`
-		TS       types.JSONTime     `json:"ts"`
+		TS       constants.JSONTime     `json:"ts"`
 	}
 	OrderBookEntity struct {
 		DepthPrice      float64
@@ -63,7 +63,7 @@ type (
 		Vol         float64
 		VolCcy      float64
 		VolCcyQuote float64
-		TS          types.JSONTime
+		TS          constants.JSONTime
 		Confirm     bool
 	}
 	IndexCandle struct {
@@ -71,34 +71,34 @@ type (
 		H       float64
 		L       float64
 		C       float64
-		TS      types.JSONTime
+		TS      constants.JSONTime
 		Confirm bool
 	}
 	Trade struct {
 		InstID  string            `json:"instId"`
-		TradeID types.JSONFloat64 `json:"tradeId"`
-		Px      types.JSONFloat64 `json:"px"`
-		Sz      types.JSONFloat64 `json:"sz"`
-		Side    types.TradeSide   `json:"side"`
-		TS      types.JSONTime    `json:"ts"`
+		TradeID constants.JSONFloat64 `json:"tradeId"`
+		Px      constants.JSONFloat64 `json:"px"`
+		Sz      constants.JSONFloat64 `json:"sz"`
+		Side    constants.TradeSide   `json:"side"`
+		TS      constants.JSONTime    `json:"ts"`
 	}
 	TotalVolume24H struct {
-		VolUsd types.JSONFloat64 `json:"volUsd"`
-		VolCny types.JSONFloat64 `json:"volCny"`
-		TS     types.JSONTime    `json:"ts"`
+		VolUsd constants.JSONFloat64 `json:"volUsd"`
+		VolCny constants.JSONFloat64 `json:"volCny"`
+		TS     constants.JSONTime    `json:"ts"`
 	}
 	IndexComponent struct {
 		Index      string            `json:"index"`
-		Last       types.JSONFloat64 `json:"last"`
+		Last       constants.JSONFloat64 `json:"last"`
 		Components []*Component      `json:"components"`
-		TS         types.JSONTime    `json:"ts"`
+		TS         constants.JSONTime    `json:"ts"`
 	}
 	Component struct {
 		Exch   string            `json:"exch"`
 		Symbol string            `json:"symbol"`
-		SymPx  types.JSONFloat64 `json:"symPx"`
-		Wgt    types.JSONFloat64 `json:"wgt"`
-		CnvPx  types.JSONFloat64 `json:"cnvPx"`
+		SymPx  constants.JSONFloat64 `json:"symPx"`
+		Wgt    constants.JSONFloat64 `json:"wgt"`
+		CnvPx  constants.JSONFloat64 `json:"cnvPx"`
 	}
 )
 

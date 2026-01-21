@@ -13,6 +13,10 @@ import (
 	"github.com/djpken/go-exc/exchanges/bitmart/ws"
 )
 
+const apiKey = "f42ce865e6123a77b507659452384a2b48165991"
+const secretKey = "72cca2bc92ee262f7e5398e3344b15638d43224a6fc5404567fc884f655a4b73"
+const memo = ".Vm3djpcl3gj94" // BitMart requires a memo
+
 func main() {
 	// Example selection
 	examples := map[int]func(){
@@ -339,9 +343,9 @@ func example6_PrivateOrderUpdates() {
 	fmt.Println("\n=== Example 6: Private Order Updates ===")
 
 	// Get credentials from environment
-	apiKey := os.Getenv("BITMART_API_KEY")
-	secretKey := os.Getenv("BITMART_SECRET_KEY")
-	memo := os.Getenv("BITMART_MEMO")
+	apiKey := apiKey
+	secretKey := secretKey
+	memo := memo
 
 	if apiKey == "" || secretKey == "" || memo == "" {
 		log.Fatal("Please set BITMART_API_KEY, BITMART_SECRET_KEY, and BITMART_MEMO environment variables")
@@ -413,9 +417,9 @@ func example6_PrivateOrderUpdates() {
 func example7_PrivateBalanceUpdates() {
 	fmt.Println("\n=== Example 7: Private Balance Updates ===")
 
-	apiKey := os.Getenv("BITMART_API_KEY")
-	secretKey := os.Getenv("BITMART_SECRET_KEY")
-	memo := os.Getenv("BITMART_MEMO")
+	apiKey := apiKey
+	secretKey := secretKey
+	memo := memo
 
 	if apiKey == "" || secretKey == "" || memo == "" {
 		log.Fatal("Please set BITMART_API_KEY, BITMART_SECRET_KEY, and BITMART_MEMO environment variables")
@@ -479,9 +483,9 @@ func example7_PrivateBalanceUpdates() {
 func example8_PrivateTradeUpdates() {
 	fmt.Println("\n=== Example 8: Private Trade Updates ===")
 
-	apiKey := os.Getenv("BITMART_API_KEY")
-	secretKey := os.Getenv("BITMART_SECRET_KEY")
-	memo := os.Getenv("BITMART_MEMO")
+	apiKey := apiKey
+	secretKey := secretKey
+	memo := memo
 
 	if apiKey == "" || secretKey == "" || memo == "" {
 		log.Fatal("Please set BITMART_API_KEY, BITMART_SECRET_KEY, and BITMART_MEMO environment variables")
@@ -548,9 +552,9 @@ func example8_PrivateTradeUpdates() {
 func example9_AllPrivateChannels() {
 	fmt.Println("\n=== Example 9: All Private Channels ===")
 
-	apiKey := os.Getenv("BITMART_API_KEY")
-	secretKey := os.Getenv("BITMART_SECRET_KEY")
-	memo := os.Getenv("BITMART_MEMO")
+	apiKey := apiKey
+	secretKey := secretKey
+	memo := memo
 
 	if apiKey == "" || secretKey == "" || memo == "" {
 		log.Fatal("Please set BITMART_API_KEY, BITMART_SECRET_KEY, and BITMART_MEMO environment variables")

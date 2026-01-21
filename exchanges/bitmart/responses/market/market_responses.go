@@ -16,9 +16,10 @@ type TickerResponse struct {
 }
 
 // TickersResponse represents tickers API response
+// BitMart returns array of arrays: [[symbol, last, v_24h, qv_24h, open_24h, high_24h, low_24h, fluctuation, bid_px, bid_sz, ask_px, ask_sz, ts], ...]
 type TickersResponse struct {
 	BaseResponse
-	Data []market.Ticker `json:"data"`
+	Data [][]interface{} `json:"data"`
 }
 
 // OrderBookResponse represents order book API response
@@ -32,22 +33,25 @@ type OrderBookResponse struct {
 }
 
 // TradesResponse represents trades API response
+// BitMart returns array of arrays: [[symbol, timestamp, price, size, side], ...]
 type TradesResponse struct {
 	BaseResponse
-	Data []market.Trade `json:"data"`
+	Data [][]interface{} `json:"data"`
 }
 
 // KlineResponse represents kline API response
+// BitMart returns array of arrays: [[timestamp, open, high, low, close, volume, quote_volume], ...]
 type KlineResponse struct {
 	BaseResponse
-	Data []market.Kline `json:"data"`
+	Data [][]interface{} `json:"data"`
 }
 
 // SymbolsResponse represents symbols API response
+// For /spot/v1/symbols - returns simple string array
 type SymbolsResponse struct {
 	BaseResponse
 	Data struct {
-		Symbols []market.Symbol `json:"symbols"`
+		Symbols []string `json:"symbols"`
 	} `json:"data"`
 }
 
@@ -55,4 +59,13 @@ type SymbolsResponse struct {
 type SymbolDetailResponse struct {
 	BaseResponse
 	Data market.Symbol `json:"data"`
+}
+
+// SymbolsDetailsResponse represents symbols details API response
+// For /spot/v1/symbols/details - returns detailed Symbol objects
+type SymbolsDetailsResponse struct {
+	BaseResponse
+	Data struct {
+		Symbols []market.Symbol `json:"symbols"`
+	} `json:"data"`
 }

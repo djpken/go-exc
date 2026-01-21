@@ -1,7 +1,9 @@
-// Package types contains type definitions for OKEx exchange
+// Package constants contains constant definitions and enumerations for OKEx exchange.
+// This includes order types, order sides, instrument types, account types, and other
+// exchange-specific constants.
 //
 // https://www.okx.com/docs-v5/en
-package types
+package constants
 
 import (
 	"strconv"

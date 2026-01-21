@@ -58,3 +58,14 @@ const (
 	MarginModeCross    MarginMode = "cross"
 	MarginModeIsolated MarginMode = "isolated"
 )
+
+// InstrumentType 交易產品類型
+type InstrumentType string
+
+const (
+	InstrumentSpot    InstrumentType = "spot"    // 現貨
+	InstrumentMargin  InstrumentType = "margin"  // 槓桿
+	InstrumentFutures InstrumentType = "futures" // 期貨
+	InstrumentSwap    InstrumentType = "swap"    // 永續合約
+	InstrumentOption  InstrumentType = "option"  // 期權
+)

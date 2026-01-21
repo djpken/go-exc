@@ -8,7 +8,7 @@ import (
 	"github.com/djpken/go-exc/exchanges/okex/events"
 	"github.com/djpken/go-exc/exchanges/okex/events/public"
 	requests "github.com/djpken/go-exc/exchanges/okex/requests/ws/public"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 	"github.com/djpken/go-exc/exchanges/okex/utils"
 )
 
@@ -47,7 +47,7 @@ func (c *Public) Instruments(req requests.Instruments, ch ...chan *public.Instru
 	if len(ch) > 0 {
 		c.iCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"instruments"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"instruments"}, m)
 }
 
 // UInstruments
@@ -58,7 +58,7 @@ func (c *Public) UInstruments(req requests.Instruments, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.iCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"instruments"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"instruments"}, m)
 }
 
 // Tickers
@@ -70,7 +70,7 @@ func (c *Public) Tickers(req requests.Tickers, ch ...chan *public.Tickers) error
 	if len(ch) > 0 {
 		c.tCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"tickers"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"tickers"}, m)
 }
 
 // UTickers
@@ -81,7 +81,7 @@ func (c *Public) UTickers(req requests.Tickers, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.tCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"tickers"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"tickers"}, m)
 }
 
 // OpenInterest
@@ -93,7 +93,7 @@ func (c *Public) OpenInterest(req requests.OpenInterest, ch ...chan *public.Open
 	if len(ch) > 0 {
 		c.oiCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"open-interest"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"open-interest"}, m)
 }
 
 // UOpenInterest
@@ -104,7 +104,7 @@ func (c *Public) UOpenInterest(req requests.OpenInterest, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.oiCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"open-interest"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"open-interest"}, m)
 }
 
 // Candlesticks
@@ -116,7 +116,7 @@ func (c *Public) Candlesticks(req requests.Candlesticks, ch ...chan *public.Cand
 	if len(ch) > 0 {
 		c.cCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{}, m)
+	return c.Subscribe(false, []constants.ChannelName{}, m)
 }
 
 // UCandlesticks
@@ -127,7 +127,7 @@ func (c *Public) UCandlesticks(req requests.Candlesticks, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.cCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{}, m)
 }
 
 // Trades
@@ -139,7 +139,7 @@ func (c *Public) Trades(req requests.Trades, ch ...chan *public.Trades) error {
 	if len(ch) > 0 {
 		c.trCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"trades"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"trades"}, m)
 }
 
 // UTrades
@@ -150,7 +150,7 @@ func (c *Public) UTrades(req requests.Trades, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.trCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"trades"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"trades"}, m)
 }
 
 // EstimatedDeliveryExercisePrice
@@ -164,7 +164,7 @@ func (c *Public) EstimatedDeliveryExercisePrice(req requests.EstimatedDeliveryEx
 	if len(ch) > 0 {
 		c.edepCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"estimated-price"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"estimated-price"}, m)
 }
 
 // UEstimatedDeliveryExercisePrice
@@ -175,7 +175,7 @@ func (c *Public) UEstimatedDeliveryExercisePrice(req requests.EstimatedDeliveryE
 	if len(rCh) > 0 && rCh[0] {
 		c.edepCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"estimated-price"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"estimated-price"}, m)
 }
 
 // MarkPrice
@@ -187,7 +187,7 @@ func (c *Public) MarkPrice(req requests.MarkPrice, ch ...chan *public.MarkPrice)
 	if len(ch) > 0 {
 		c.mpCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"mark-price"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"mark-price"}, m)
 }
 
 // UMarkPrice
@@ -198,7 +198,7 @@ func (c *Public) UMarkPrice(req requests.MarkPrice, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.mpCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"mark-price"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"mark-price"}, m)
 }
 
 // MarkPriceCandlesticks
@@ -211,7 +211,7 @@ func (c *Public) MarkPriceCandlesticks(req requests.MarkPriceCandlesticks, ch ..
 	if len(ch) > 0 {
 		c.mpcCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{}, m)
+	return c.Subscribe(false, []constants.ChannelName{}, m)
 }
 
 // UMarkPriceCandlesticks
@@ -223,7 +223,7 @@ func (c *Public) UMarkPriceCandlesticks(req requests.MarkPriceCandlesticks, rCh 
 	if len(rCh) > 0 && rCh[0] {
 		c.mpcCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{}, m)
 }
 
 // PriceLimit
@@ -235,7 +235,7 @@ func (c *Public) PriceLimit(req requests.PriceLimit, ch ...chan *public.PriceLim
 	if len(ch) > 0 {
 		c.plCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"price-limit"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"price-limit"}, m)
 }
 
 // UPriceLimit
@@ -246,7 +246,7 @@ func (c *Public) UPriceLimit(req requests.PriceLimit, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.plCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"price-limit"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"price-limit"}, m)
 }
 
 // OrderBook
@@ -264,7 +264,7 @@ func (c *Public) OrderBook(reqs []requests.OrderBook, ch ...chan *public.OrderBo
 		m := utils.S2M(req)
 		subscriptions = append(subscriptions, m)
 	}
-	return c.Subscribe(false, []types.ChannelName{}, subscriptions...)
+	return c.Subscribe(false, []constants.ChannelName{}, subscriptions...)
 }
 
 // UOrderBook
@@ -275,7 +275,7 @@ func (c *Public) UOrderBook(req requests.OrderBook, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.obCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{types.ChannelName(req.Channel)}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{constants.ChannelName(req.Channel)}, m)
 }
 
 // OPTIONSummary
@@ -287,7 +287,7 @@ func (c *Public) OPTIONSummary(req requests.OPTIONSummary, ch ...chan *public.OP
 	if len(ch) > 0 {
 		c.osCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"opt-summary"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"opt-summary"}, m)
 }
 
 // UOPTIONSummary
@@ -298,7 +298,7 @@ func (c *Public) UOPTIONSummary(req requests.OPTIONSummary, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.osCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"opt-summary"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"opt-summary"}, m)
 }
 
 // FundingRate
@@ -310,7 +310,7 @@ func (c *Public) FundingRate(req requests.FundingRate, ch ...chan *public.Fundin
 	if len(ch) > 0 {
 		c.frCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"funding-rate"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"funding-rate"}, m)
 }
 
 // UFundingRate
@@ -321,7 +321,7 @@ func (c *Public) UFundingRate(req requests.FundingRate, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.frCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"funding-rate"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"funding-rate"}, m)
 }
 
 // IndexCandlesticks
@@ -334,7 +334,7 @@ func (c *Public) IndexCandlesticks(req requests.IndexCandlesticks, ch ...chan *p
 	if len(ch) > 0 {
 		c.icCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{}, m)
+	return c.Subscribe(false, []constants.ChannelName{}, m)
 }
 
 // UIndexCandlesticks
@@ -346,7 +346,7 @@ func (c *Public) UIndexCandlesticks(req requests.IndexCandlesticks, rCh ...bool)
 	if len(rCh) > 0 && rCh[0] {
 		c.icCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{}, m)
 }
 
 // IndexTickers
@@ -358,7 +358,7 @@ func (c *Public) IndexTickers(req requests.IndexTickers, ch ...chan *public.Inde
 	if len(ch) > 0 {
 		c.itCh = ch[0]
 	}
-	return c.Subscribe(false, []types.ChannelName{"index-tickers"}, m)
+	return c.Subscribe(false, []constants.ChannelName{"index-tickers"}, m)
 }
 
 // UIndexTickers
@@ -369,7 +369,7 @@ func (c *Public) UIndexTickers(req requests.IndexTickers, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.itCh = nil
 	}
-	return c.Unsubscribe(false, []types.ChannelName{"index-tickers"}, m)
+	return c.Unsubscribe(false, []constants.ChannelName{"index-tickers"}, m)
 }
 
 func (c *Public) Process(data []byte, e *events.Basic) bool {

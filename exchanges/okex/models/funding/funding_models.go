@@ -1,6 +1,6 @@
 package funding
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	Currency struct {
@@ -23,17 +23,17 @@ type (
 	Transfer struct {
 		TransID string            `json:"transId"`
 		Ccy     string            `json:"ccy"`
-		Amt     types.JSONFloat64 `json:"amt"`
-		From    types.AccountType `json:"from,string"`
-		To      types.AccountType `json:"to,string"`
+		Amt     constants.JSONFloat64 `json:"amt"`
+		From    constants.AccountType `json:"from,string"`
+		To      constants.AccountType `json:"to,string"`
 	}
 	Bill struct {
 		BillID string            `json:"billId"`
 		Ccy    string            `json:"ccy"`
-		Bal    types.JSONFloat64 `json:"bal"`
-		BalChg types.JSONFloat64 `json:"balChg"`
-		Type   types.BillType    `json:"type,string"`
-		TS     types.JSONTime    `json:"ts"`
+		Bal    constants.JSONFloat64 `json:"bal"`
+		BalChg constants.JSONFloat64 `json:"balChg"`
+		Type   constants.BillType    `json:"type,string"`
+		TS     constants.JSONTime    `json:"ts"`
 	}
 	DepositAddress struct {
 		Addr     string            `json:"addr"`
@@ -44,8 +44,8 @@ type (
 		Chain    string            `json:"chain"`
 		CtAddr   string            `json:"ctAddr"`
 		Selected bool              `json:"selected"`
-		To       types.AccountType `json:"to,string"`
-		TS       types.JSONTime    `json:"ts"`
+		To       constants.AccountType `json:"to,string"`
+		TS       constants.JSONTime    `json:"ts"`
 	}
 	DepositHistory struct {
 		Ccy   string             `json:"ccy"`
@@ -54,15 +54,15 @@ type (
 		From  string             `json:"from"`
 		To    string             `json:"to"`
 		DepId string             `json:"depId"`
-		Amt   types.JSONFloat64  `json:"amt"`
-		State types.DepositState `json:"state,string"`
-		TS    types.JSONTime     `json:"ts"`
+		Amt   constants.JSONFloat64  `json:"amt"`
+		State constants.DepositState `json:"state,string"`
+		TS    constants.JSONTime     `json:"ts"`
 	}
 	Withdrawal struct {
 		Ccy   string            `json:"ccy"`
 		Chain string            `json:"chain"`
-		WdID  types.JSONInt64   `json:"wdId"`
-		Amt   types.JSONFloat64 `json:"amt"`
+		WdID  constants.JSONInt64   `json:"wdId"`
+		Amt   constants.JSONFloat64 `json:"amt"`
 	}
 	WithdrawalHistory struct {
 		Ccy   string                `json:"ccy"`
@@ -73,20 +73,20 @@ type (
 		Tag   string                `json:"tag,omitempty"`
 		PmtID string                `json:"pmtId,omitempty"`
 		Memo  string                `json:"memo,omitempty"`
-		Amt   types.JSONFloat64     `json:"amt"`
-		Fee   types.JSONFloat64     `json:"fee"`
-		WdID  types.JSONInt64       `json:"wdId"`
-		State types.WithdrawalState `json:"state,string"`
-		TS    types.JSONTime        `json:"ts"`
+		Amt   constants.JSONFloat64     `json:"amt"`
+		Fee   constants.JSONFloat64     `json:"fee"`
+		WdID  constants.JSONInt64       `json:"wdId"`
+		State constants.WithdrawalState `json:"state,string"`
+		TS    constants.JSONTime        `json:"ts"`
 	}
 	PiggyBank struct {
 		Ccy  string            `json:"ccy"`
-		Amt  types.JSONFloat64 `json:"amt"`
-		Side types.ActionType  `json:"side,string"`
+		Amt  constants.JSONFloat64 `json:"amt"`
+		Side constants.ActionType  `json:"side,string"`
 	}
 	PiggyBankBalance struct {
 		Ccy      string            `json:"ccy"`
-		Amt      types.JSONFloat64 `json:"amt"`
-		Earnings types.JSONFloat64 `json:"earnings"`
+		Amt      constants.JSONFloat64 `json:"amt"`
+		Earnings constants.JSONFloat64 `json:"earnings"`
 	}
 )

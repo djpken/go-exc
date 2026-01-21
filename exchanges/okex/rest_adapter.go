@@ -7,7 +7,7 @@ import (
 	accountreq "github.com/djpken/go-exc/exchanges/okex/requests/rest/account"
 	tradereq "github.com/djpken/go-exc/exchanges/okex/requests/rest/trade"
 	"github.com/djpken/go-exc/exchanges/okex/rest"
-	okextypes "github.com/djpken/go-exc/exchanges/okex/types"
+	okexconstants "github.com/djpken/go-exc/exchanges/okex/constants"
 	commontypes "github.com/djpken/go-exc/types"
 )
 
@@ -68,7 +68,7 @@ func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, symbol, side, orderTyp
 	// Build OKEx order request
 	req := tradereq.PlaceOrder{
 		InstID:  symbol,
-		TdMode:  okextypes.TradeCashMode, // Default to cash mode
+		TdMode:  okexconstants.TradeCashMode, // Default to cash mode
 		Side:    a.converter.ConvertOrderSide(side),
 		OrdType: a.converter.ConvertOrderType(orderType),
 		Sz:      quantity,
@@ -81,7 +81,7 @@ func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, symbol, side, orderTyp
 	// Apply extra parameters
 	if extra != nil {
 		if tdMode, ok := extra["tdMode"].(string); ok {
-			req.TdMode = okextypes.TradeMode(tdMode)
+			req.TdMode = okexconstants.TradeMode(tdMode)
 		}
 		if clOrdID, ok := extra["clOrdID"].(string); ok {
 			req.ClOrdID = clOrdID

@@ -66,7 +66,7 @@ type TradeAPIAdapter struct {
 
 // PlaceOrder places a new order
 func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, symbol, side, orderType string, quantity, price float64, extra map[string]interface{}) (*commontypes.Order, error) {
-	req := tradereq.PlaceOrder{
+	req := tradereq.PlaceOrderRequest{
 		Symbol: symbol,
 		Side:   a.converter.ConvertOrderSide(side),
 		Type:   a.converter.ConvertOrderType(orderType),
@@ -100,7 +100,7 @@ func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, symbol, side, orderTyp
 
 // CancelOrder cancels an existing order
 func (a *TradeAPIAdapter) CancelOrder(ctx context.Context, symbol, orderID string, extra map[string]interface{}) error {
-	req := tradereq.CancelOrder{
+	req := tradereq.CancelOrderRequest{
 		Symbol:  symbol,
 		OrderID: orderID,
 	}
@@ -134,7 +134,7 @@ func (a *AccountAPIAdapter) GetBalance(ctx context.Context) (*commontypes.Accoun
 		return nil, err
 	}
 
-	return a.converter.ConvertAccountBalance(balances), nil
+	return a.converter.ConvertAccountBalance(balances.Data.Balances), nil
 }
 
 // GetPositions gets account positions (not supported for spot trading)
@@ -156,7 +156,7 @@ func (a *MarketAPIAdapter) GetTicker(ctx context.Context, symbol string) (*commo
 		return nil, err
 	}
 
-	return a.converter.ConvertTicker(ticker), nil
+	return a.converter.ConvertTicker(&ticker.Data), nil
 }
 
 // GetOrderBook gets order book
@@ -177,7 +177,7 @@ func (a *MarketAPIAdapter) GetOrderBook(ctx context.Context, symbol string, dept
 		return nil, err
 	}
 
-	return a.converter.ConvertOrderBook(orderBook, symbol), nil
+	return a.converter.ConvertOrderBook(&orderBook.Data, symbol), nil
 }
 
 // FundingAPIAdapter implements funding operations
@@ -194,11 +194,11 @@ func (a *FundingAPIAdapter) GetDepositAddress(ctx context.Context, currency stri
 		return "", err
 	}
 
-	if address.DepositAddress != "" {
-		if address.DepositMemo != "" {
-			return fmt.Sprintf("%s:%s", address.DepositAddress, address.DepositMemo), nil
+	if address.Data.Address != "" {
+		if address.Data.Tag != "" {
+			return fmt.Sprintf("%s:%s", address.Data.Address, address.Data.Tag), nil
 		}
-		return address.DepositAddress, nil
+		return address.Data.Address, nil
 	}
 
 	return "", fmt.Errorf("no deposit address found for currency %s", currency)
@@ -206,14 +206,14 @@ func (a *FundingAPIAdapter) GetDepositAddress(ctx context.Context, currency stri
 
 // Withdraw initiates a withdrawal
 func (a *FundingAPIAdapter) Withdraw(ctx context.Context, currency string, amount float64, address, tag string, extra map[string]interface{}) (string, error) {
-	req := fundingreq.Withdraw{
+	req := fundingreq.WithdrawRequest{
 		Currency: currency,
 		Amount:   a.converter.formatFloat(amount),
 		Address:  address,
 	}
 
 	if tag != "" {
-		req.AddressExt = tag
+		req.AddressTag = tag
 	}
 
 	resp, err := a.client.Funding.Withdraw(req)
@@ -221,5 +221,5 @@ func (a *FundingAPIAdapter) Withdraw(ctx context.Context, currency string, amoun
 		return "", err
 	}
 
-	return resp.WithdrawID, nil
+	return resp.Data.WithdrawID, nil
 }

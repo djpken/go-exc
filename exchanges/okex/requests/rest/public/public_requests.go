@@ -1,24 +1,24 @@
 package public
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	GetInstruments struct {
 		Uly      string               `json:"uly,omitempty"`
 		InstID   string               `json:"instId,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	GetDeliveryExerciseHistory struct {
 		Uly      string               `json:"uly"`
 		After    int64                `json:"after,omitempty,string"`
 		Before   int64                `json:"before,omitempty,string"`
 		Limit    int64                `json:"limit,omitempty,string"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	GetOpenInterest struct {
 		Uly      string               `json:"uly,omitempty"`
 		InstID   string               `json:"instId,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	GetFundingRate struct {
 		InstID string `json:"instId"`
@@ -46,25 +46,25 @@ type (
 		After    int64                `json:"after,omitempty,string"`
 		Before   int64                `json:"before,omitempty,string"`
 		Limit    int64                `json:"limit,omitempty,string"`
-		InstType types.InstrumentType `json:"instType"`
-		MgnMode  types.MarginMode     `json:"mgnMode,omitempty"`
-		Alias    types.AliasType      `json:"alias,omitempty"`
-		State    types.OrderState     `json:"state,omitempty"`
+		InstType constants.InstrumentType `json:"instType"`
+		MgnMode  constants.MarginMode     `json:"mgnMode,omitempty"`
+		Alias    constants.AliasType      `json:"alias,omitempty"`
+		State    constants.OrderState     `json:"state,omitempty"`
 	}
 	GetMarkPrice struct {
 		InstID   string               `json:"instId,omitempty"`
 		Uly      string               `json:"uly,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	GetPositionTiers struct {
 		InstID   string               `json:"instId,omitempty"`
 		Uly      string               `json:"uly,omitempty"`
-		InstType types.InstrumentType `json:"instType"`
-		TdMode   types.TradeMode      `json:"tdMode"`
-		Tier     types.JSONInt64      `json:"tier,omitempty"`
+		InstType constants.InstrumentType `json:"instType"`
+		TdMode   constants.TradeMode      `json:"tdMode"`
+		Tier     constants.JSONInt64      `json:"tier,omitempty"`
 	}
 	GetUnderlying struct {
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	Status struct {
 		State string `json:"state,omitempty"`

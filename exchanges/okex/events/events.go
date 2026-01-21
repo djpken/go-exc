@@ -3,7 +3,7 @@ package events
 import (
 	"encoding/json"
 
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 )
 
 type (
@@ -12,11 +12,11 @@ type (
 		Event     string          `json:"event"`
 		Code      int             `json:"code,omitempty,string"`
 		Msg       string          `json:"msg,omitempty"`
-		Op        types.Operation `json:"op,omitempty"`
+		Op        constants.Operation `json:"op,omitempty"`
 		Arg       *Argument       `json:"arg,omitempty"`
 		Args      []*Argument     `json:"args,omitempty"`
 		Data      []*Argument     `json:"data,omitempty"`
-		EventType types.EventType `json:"eventType,omitempty"`
+		EventType constants.EventType `json:"eventType,omitempty"`
 		CurPage   int             `json:"curPage,omitempty"`
 		LastPage  bool            `json:"lastPage,omitempty"`
 	}
@@ -28,14 +28,14 @@ type (
 		Code int             `json:"code,omitempty,string"`
 		Msg  string          `json:"msg,omitempty"`
 		ID   string          `json:"id,omitempty"`
-		Op   types.Operation `json:"op,omitempty"`
+		Op   constants.Operation `json:"op,omitempty"`
 		Data []*Argument     `json:"data,omitempty"`
 	}
 	Error struct {
 		Event string          `json:"event,omitempty"`
 		Msg   string          `json:"msg,omitempty"`
 		Op    string          `json:"op,omitempty"`
-		Code  types.JSONInt64 `json:"code"`
+		Code  constants.JSONInt64 `json:"code"`
 		Args  []*Argument     `json:"args,omitempty"`
 		Arg   *Argument       `json:"arg,omitempty"`
 		Data  []*Argument     `json:"data,omitempty"`

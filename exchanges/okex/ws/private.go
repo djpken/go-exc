@@ -6,7 +6,7 @@ import (
 	"github.com/djpken/go-exc/exchanges/okex/events"
 	"github.com/djpken/go-exc/exchanges/okex/events/private"
 	requests "github.com/djpken/go-exc/exchanges/okex/requests/ws/private"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 	"github.com/djpken/go-exc/exchanges/okex/utils"
 )
 
@@ -35,7 +35,7 @@ func (c *Private) Account(req requests.Account, ch ...chan *private.Account) err
 	if len(ch) > 0 {
 		c.aCh = ch[0]
 	}
-	return c.Subscribe(true, []types.ChannelName{"account"}, m)
+	return c.Subscribe(true, []constants.ChannelName{"account"}, m)
 }
 
 // UAccount
@@ -46,7 +46,7 @@ func (c *Private) UAccount(req requests.Account, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.aCh = nil
 	}
-	return c.Unsubscribe(true, []types.ChannelName{"account"}, m)
+	return c.Unsubscribe(true, []constants.ChannelName{"account"}, m)
 }
 
 // Position
@@ -58,7 +58,7 @@ func (c *Private) Position(req requests.Position, ch ...chan *private.Position) 
 	if len(ch) > 0 {
 		c.pCh = ch[0]
 	}
-	return c.Subscribe(true, []types.ChannelName{"positions"}, m)
+	return c.Subscribe(true, []constants.ChannelName{"positions"}, m)
 }
 
 // UPosition
@@ -69,7 +69,7 @@ func (c *Private) UPosition(req requests.Position, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.pCh = nil
 	}
-	return c.Unsubscribe(true, []types.ChannelName{"positions"}, m)
+	return c.Unsubscribe(true, []constants.ChannelName{"positions"}, m)
 }
 
 // BalanceAndPosition
@@ -81,7 +81,7 @@ func (c *Private) BalanceAndPosition(ch ...chan *private.BalanceAndPosition) err
 	if len(ch) > 0 {
 		c.bnpCh = ch[0]
 	}
-	return c.Subscribe(true, []types.ChannelName{"balance_and_position"}, m)
+	return c.Subscribe(true, []constants.ChannelName{"balance_and_position"}, m)
 }
 
 // UBalanceAndPosition unsubscribes a position channel
@@ -92,7 +92,7 @@ func (c *Private) UBalanceAndPosition(rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.bnpCh = nil
 	}
-	return c.Unsubscribe(true, []types.ChannelName{"balance_and_position"}, m)
+	return c.Unsubscribe(true, []constants.ChannelName{"balance_and_position"}, m)
 }
 
 // Order
@@ -104,7 +104,7 @@ func (c *Private) Order(req requests.Order, ch ...chan *private.Order) error {
 	if len(ch) > 0 {
 		c.oCh = ch[0]
 	}
-	return c.Subscribe(true, []types.ChannelName{"orders"}, m)
+	return c.Subscribe(true, []constants.ChannelName{"orders"}, m)
 }
 
 // UOrder
@@ -115,7 +115,7 @@ func (c *Private) UOrder(req requests.Order, rCh ...bool) error {
 	if len(rCh) > 0 && rCh[0] {
 		c.oCh = nil
 	}
-	return c.Unsubscribe(true, []types.ChannelName{"orders"}, m)
+	return c.Unsubscribe(true, []constants.ChannelName{"orders"}, m)
 }
 
 func (c *Private) Process(data []byte, e *events.Basic) bool {

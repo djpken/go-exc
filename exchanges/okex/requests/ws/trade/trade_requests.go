@@ -1,6 +1,6 @@
 package trade
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	PlaceOrder struct {
@@ -12,11 +12,11 @@ type (
 		ReduceOnly bool               `json:"reduceOnly,omitempty"`
 		Sz         float64            `json:"sz,string"`
 		Px         float64            `json:"px,omitempty,string"`
-		TdMode     types.TradeMode    `json:"tdMode"`
-		Side       types.OrderSide    `json:"side"`
-		PosSide    types.PositionSide `json:"posSide,omitempty"`
-		OrdType    types.OrderType    `json:"ordType"`
-		TgtCcy     types.QuantityType `json:"tgtCcy,omitempty"`
+		TdMode     constants.TradeMode    `json:"tdMode"`
+		Side       constants.OrderSide    `json:"side"`
+		PosSide    constants.PositionSide `json:"posSide,omitempty"`
+		OrdType    constants.OrderType    `json:"ordType"`
+		TgtCcy     constants.QuantityType `json:"tgtCcy,omitempty"`
 	}
 	CancelOrder struct {
 		ID      string `json:"-"`

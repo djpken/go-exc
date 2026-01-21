@@ -6,16 +6,16 @@ import (
 
 	"github.com/djpken/go-exc/exchanges/bitmart"
 	accountreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/account"
+	fundingreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/funding"
 	marketreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/market"
 	tradereq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/trade"
-	fundingreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/funding"
 )
 
 func main() {
 	// Initialize API credentials
-	apiKey := "YOUR-API-KEY"
-	secretKey := "YOUR-SECRET-KEY"
-	memo := "YOUR-MEMO" // BitMart requires a memo
+	apiKey := "f42ce865e6123a77b507659452384a2b48165991"
+	secretKey := "72cca2bc92ee262f7e5398e3344b15638d43224a6fc5404567fc884f655a4b73"
+	memo := ".Vm3djpcl3gj94" // BitMart requires a memo
 
 	ctx := context.Background()
 
@@ -55,11 +55,14 @@ func main() {
 	} else {
 		log.Printf("Code: %d, Retrieved %d tickers", tickers.Code, len(tickers.Data))
 		// Print first 3 tickers as example
+		// Format: [symbol, last, v_24h, qv_24h, open_24h, high_24h, low_24h, fluctuation, bid_px, bid_sz, ask_px, ask_sz, ts]
 		for i, t := range tickers.Data {
 			if i >= 3 {
 				break
 			}
-			log.Printf("  %s: Last=%s, Volume=%s", t.Symbol, t.LastPrice, t.BaseVolume)
+			if len(t) >= 3 {
+				log.Printf("  %v: Last=%v, Volume=%v", t[0], t[1], t[2])
+			}
 		}
 	}
 
@@ -76,11 +79,11 @@ func main() {
 		log.Printf("Timestamp: %d", orderBook.Data.Timestamp)
 		log.Printf("Bids: %d levels, Asks: %d levels",
 			len(orderBook.Data.Bids), len(orderBook.Data.Asks))
-		if len(orderBook.Data.Bids) > 0 {
-			log.Printf("Best Bid: %s @ %s", orderBook.Data.Bids[0].Amount, orderBook.Data.Bids[0].Price)
+		if len(orderBook.Data.Bids) > 0 && len(orderBook.Data.Bids[0]) >= 2 {
+			log.Printf("Best Bid: %s @ %s", orderBook.Data.Bids[0][1], orderBook.Data.Bids[0][0])
 		}
-		if len(orderBook.Data.Asks) > 0 {
-			log.Printf("Best Ask: %s @ %s", orderBook.Data.Asks[0].Amount, orderBook.Data.Asks[0].Price)
+		if len(orderBook.Data.Asks) > 0 && len(orderBook.Data.Asks[0]) >= 2 {
+			log.Printf("Best Ask: %s @ %s", orderBook.Data.Asks[0][1], orderBook.Data.Asks[0][0])
 		}
 	}
 
@@ -94,11 +97,14 @@ func main() {
 		log.Printf("Error getting trades: %v", err)
 	} else {
 		log.Printf("Code: %d, Retrieved %d trades", trades.Code, len(trades.Data))
+		// Format: [symbol, timestamp, price, size, side]
 		for i, trade := range trades.Data {
 			if i >= 3 {
 				break
 			}
-			log.Printf("  Trade: %s @ %s, Side: %s", trade.Size, trade.Price, trade.Side)
+			if len(trade) >= 5 {
+				log.Printf("  Trade: %v @ %v, Side: %v", trade[3], trade[2], trade[4])
+			}
 		}
 	}
 
@@ -113,12 +119,15 @@ func main() {
 		log.Printf("Error getting klines: %v", err)
 	} else {
 		log.Printf("Code: %d, Retrieved %d klines", klines.Code, len(klines.Data))
+		// Format: [timestamp, open, high, low, close, volume, quote_volume]
 		for i, k := range klines.Data {
 			if i >= 3 {
 				break
 			}
-			log.Printf("  Kline: O=%s H=%s L=%s C=%s V=%s",
-				k.Open, k.High, k.Low, k.Close, k.Volume)
+			if len(k) >= 7 {
+				log.Printf("  Kline: O=%v H=%v L=%v C=%v V=%v",
+					k[1], k[2], k[3], k[4], k[5])
+			}
 		}
 	}
 
@@ -129,13 +138,12 @@ func main() {
 		log.Printf("Error getting symbols: %v", err)
 	} else {
 		log.Printf("Code: %d, Retrieved %d symbols", symbols.Code, len(symbols.Data.Symbols))
-		// Print first 3 symbols
+		// Print first 5 symbols
 		for i, s := range symbols.Data.Symbols {
-			if i >= 3 {
+			if i >= 5 {
 				break
 			}
-			log.Printf("  Symbol: %s (%s/%s), Status: %s",
-				s.Symbol, s.BaseCurrency, s.QuoteCurrency, s.TradingStatus)
+			log.Printf("  Symbol: %s", s)
 		}
 	}
 

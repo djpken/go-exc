@@ -11,9 +11,9 @@ import (
 
 func main() {
 	// Initialize API credentials
-	apiKey := "YOUR-API-KEY"
-	secretKey := "YOUR-SECRET-KEY"
-	passphrase := "YOUR-PASSPHRASE"
+	apiKey := "cf5514a3-4913-4337-be39-d521795e3a13"
+	secretKey := "6CE1209CDEEC014A6DE41D9BB583CDF3"
+	passphrase := ".Vm3djpcl3gj94"
 
 	ctx := context.Background()
 
@@ -64,12 +64,12 @@ func main() {
 	orderResp, err := client.Rest.Trade.PlaceOrder([]tradereq.PlaceOrder{
 		{
 			InstID:  "BTC-USDT",
-			TdMode:  "cash",     // Trading mode: cash, cross, isolated
-			Side:    "buy",      // buy or sell
-			OrdType: "limit",    // limit, market, post_only, fok, ioc
-			Sz:      0.001,      // Order size
-			Px:      30000.0,    // Price
-			Tag:     "example",  // Optional tag
+			TdMode:  "cash",    // Trading mode: cash, cross, isolated
+			Side:    "buy",     // buy or sell
+			OrdType: "limit",   // limit, market, post_only, fok, ioc
+			Sz:      0.001,     // Order size
+			Px:      30000.0,   // Price
+			Tag:     "example", // Optional tag
 		},
 	})
 	if err != nil {

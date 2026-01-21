@@ -1,6 +1,10 @@
 package exc
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/djpken/go-exc/types"
+)
 
 var (
 	// ErrInvalidExchange is returned when an invalid exchange type is specified
@@ -32,6 +36,10 @@ var (
 
 	// ErrNotImplemented is returned when a feature is not implemented
 	ErrNotImplemented = errors.New("not implemented")
+
+	// ErrNotSupported is returned when a feature is not supported by the exchange
+	// This is an alias to types.ErrNotSupported for convenience
+	ErrNotSupported = types.ErrNotSupported
 )
 
 // Error represents an exchange API error

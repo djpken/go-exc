@@ -3,18 +3,21 @@ package exc
 import (
 	"context"
 
+	"github.com/djpken/go-exc/exchanges/bitmart"
 	"github.com/djpken/go-exc/exchanges/okex"
 )
 
 // NewExchange creates a new exchange instance based on the exchange type
 func NewExchange(ctx context.Context, exchangeType ExchangeType, cfg Config) (Exchange, error) {
 	switch exchangeType {
-	case OKEx:
-		return newOKExExchange(ctx, cfg)
-	case Binance:
-		return nil, ErrNotImplemented
+	case OKX:
+		return newOKExExchange(ctx, cfg, false)
+	case OKXTest:
+		return newOKExExchange(ctx, cfg, true)
 	case BitMart:
-		return nil, ErrNotImplemented
+		return newBitMartExchange(ctx, cfg, false)
+	case BitMartTEST:
+		return newBitMartExchange(ctx, cfg, true)
 	case BingX:
 		return nil, ErrNotImplemented
 	default:
@@ -23,20 +26,39 @@ func NewExchange(ctx context.Context, exchangeType ExchangeType, cfg Config) (Ex
 }
 
 // newOKExExchange creates a new OKEx exchange instance
-// Note: Currently returns the native OKEx client directly
-// TODO: Implement full Exchange interface wrapper
-func newOKExExchange(ctx context.Context, cfg Config) (Exchange, error) {
-	_, err := okex.NewOKExExchange(ctx, cfg.APIKey, cfg.SecretKey, cfg.Passphrase, cfg.TestMode)
+func newOKExExchange(ctx context.Context, cfg Config, testMode bool) (Exchange, error) {
+	client, err := okex.NewOKExExchange(ctx, cfg.APIKey, cfg.SecretKey, cfg.Passphrase, testMode)
 	if err != nil {
 		return nil, err
 	}
+	return client, nil
+}
 
-	// TODO: Wrap in Exchange interface adapter
-	return nil, ErrNotImplemented
+// newBitMartExchange creates a new BitMart exchange instance
+func newBitMartExchange(ctx context.Context, cfg Config, testMode bool) (Exchange, error) {
+	// BitMart requires memo which should be in Extra["memo"]
+	memo := ""
+	if cfg.Extra != nil {
+		if m, ok := cfg.Extra["memo"].(string); ok {
+			memo = m
+		}
+	}
+
+	client, err := bitmart.NewBitMartExchange(ctx, cfg.APIKey, cfg.SecretKey, memo, testMode)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // NewOKExClient creates a native OKEx client directly
 // This is the recommended way to use OKEx for now
 func NewOKExClient(ctx context.Context, apiKey, secretKey, passphrase string, testMode bool) (*okex.OKExExchange, error) {
 	return okex.NewOKExExchange(ctx, apiKey, secretKey, passphrase, testMode)
+}
+
+// NewBitMartClient creates a native BitMart client directly
+// This is the recommended way to use BitMart for now
+func NewBitMartClient(ctx context.Context, apiKey, secretKey, memo string) (*bitmart.BitMartExchange, error) {
+	return bitmart.NewBitMartExchange(ctx, apiKey, secretKey, memo, false)
 }

@@ -1,10 +1,10 @@
 package public
 
-import "github.com/djpken/go-exc/exchanges/okex/types"
+import "github.com/djpken/go-exc/exchanges/okex/constants"
 
 type (
 	Instruments struct {
-		InstType types.InstrumentType `json:"instType"`
+		InstType constants.InstrumentType `json:"instType"`
 	}
 	Tickers struct {
 		InstID string `json:"instId"`
@@ -14,7 +14,7 @@ type (
 	}
 	Candlesticks struct {
 		InstID  string                     `json:"instId"`
-		Channel types.CandleStickWsBarSize `json:"channel"`
+		Channel constants.CandleStickWsBarSize `json:"channel"`
 	}
 	Trades struct {
 		InstID string `json:"instId"`
@@ -22,14 +22,14 @@ type (
 	EstimatedDeliveryExercisePrice struct {
 		InstID   string               `json:"instId"`
 		Uly      string               `json:"uly,omitempty"`
-		InstType types.InstrumentType `json:"instType,omitempty"`
+		InstType constants.InstrumentType `json:"instType,omitempty"`
 	}
 	MarkPrice struct {
 		InstID string `json:"instId"`
 	}
 	MarkPriceCandlesticks struct {
 		InstID  string                     `json:"instId"`
-		Channel types.CandleStickWsBarSize `json:"channel"`
+		Channel constants.CandleStickWsBarSize `json:"channel"`
 	}
 	PriceLimit struct {
 		InstID string `json:"instId"`

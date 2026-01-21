@@ -11,15 +11,15 @@ import (
 	"github.com/djpken/go-exc/exchanges/okex/events/public"
 	ws_private_requests "github.com/djpken/go-exc/exchanges/okex/requests/ws/private"
 	ws_public_requests "github.com/djpken/go-exc/exchanges/okex/requests/ws/public"
-	"github.com/djpken/go-exc/exchanges/okex/types"
+	"github.com/djpken/go-exc/exchanges/okex/constants"
 	"github.com/djpken/go-exc/exchanges/okex/ws"
 )
 
 func main() {
 	// Initialize API credentials
-	apiKey := "YOUR-API-KEY"
-	secretKey := "YOUR-SECRET-KEY"
-	passphrase := "YOUR-PASSPHRASE"
+	apiKey := "cf5514a3-4913-4337-be39-d521795e3a13"
+	secretKey := "6CE1209CDEEC014A6DE41D9BB583CDF3"
+	passphrase := ".Vm3djpcl3gj94"
 
 	ctx := context.Background()
 
@@ -164,7 +164,7 @@ func main() {
 	log.Println("\n--- Example 4: Subscribe to Position Updates ---")
 	positionChan := make(chan *private.Position, 10)
 	err = client.Ws.Private.Position(ws_private_requests.Position{
-		InstType: types.SwapInstrument,
+		InstType: constants.SwapInstrument,
 	}, positionChan)
 	if err != nil {
 		log.Printf("Failed to subscribe to positions: %v", err)
