@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/djpken/go-exc/exchanges/bitmart/utils"
+	"github.com/gorilla/websocket"
 )
 
 // MessageHandler is a function that handles WebSocket messages
@@ -145,8 +145,7 @@ func (c *ClientWs) Login() error {
 	c.mu.RUnlock()
 
 	timestamp := utils.GetTimestamp()
-	message := timestamp + "#" + c.memo + "#" + "bitmart.WebSocket"
-	sign := utils.GenerateSignature(timestamp, message, c.secretKey)
+	sign := utils.GenerateSignature(timestamp, c.memo, "bitmart.WebSocket", c.secretKey)
 
 	loginMsg := map[string]interface{}{
 		"op":   "login",

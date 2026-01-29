@@ -123,6 +123,105 @@ func main() {
 }
 ```
 
+### WebSocket Ticker Subscriptions (Unified Interface)
+
+Subscribe to real-time ticker updates across any exchange:
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    exc "github.com/djpken/go-exc"
+)
+
+func main() {
+    ctx := context.Background()
+
+    // Works with any exchange - just change exc.OKX to exc.BitMart, etc.
+    client, err := exc.NewExchange(ctx, exc.OKX, exc.Config{
+        APIKey:     "your-api-key",
+        SecretKey:  "your-secret-key",
+        Passphrase: "your-passphrase",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Close()
+
+    // Create channel for ticker updates
+    tickerCh := make(chan *exc.TickerUpdate, 100)
+
+    // Subscribe to symbols
+    symbols := []string{"BTC-USDT", "ETH-USDT"}
+    if err := client.SubscribeTickers(tickerCh, symbols...); err != nil {
+        log.Fatal(err)
+    }
+
+    // Process real-time ticker updates
+    for update := range tickerCh {
+        fmt.Printf("%s: %s (24h change: %s%%)\n",
+            update.Symbol, update.LastPrice, update.PercentChange24h)
+    }
+}
+```
+
+### WebSocket Candlestick Subscriptions (Unified Interface)
+
+Subscribe to real-time candlestick/kline updates across any exchange:
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    exc "github.com/djpken/go-exc"
+)
+
+func main() {
+    ctx := context.Background()
+
+    // Works with any exchange - just change exc.OKX to exc.BitMart, etc.
+    client, err := exc.NewExchange(ctx, exc.OKX, exc.Config{
+        APIKey:     "your-api-key",
+        SecretKey:  "your-secret-key",
+        Passphrase: "your-passphrase",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Close()
+
+    // Create channel for candle updates
+    candleCh := make(chan *exc.CandleUpdate, 100)
+
+    // Subscribe to symbols with specific interval
+    // Intervals: "1m", "5m", "15m", "30m", "1H", "4H", "1D", etc.
+    symbols := []string{"BTC-USDT", "ETH-USDT"}
+    if err := client.SubscribeCandles(candleCh, "1m", symbols...); err != nil {
+        log.Fatal(err)
+    }
+
+    // Process real-time candle updates
+    for update := range candleCh {
+        if update.Confirmed {
+            fmt.Printf("%s candle closed: O=%s H=%s L=%s C=%s Vol=%s\n",
+                update.Symbol, update.Open, update.High, update.Low,
+                update.Close, update.Volume)
+        } else {
+            fmt.Printf("%s candle forming: Current=%s\n",
+                update.Symbol, update.Close)
+        }
+    }
+}
+```
+
 ## Migration from go-okex
 
 ### No Code Changes Required!
@@ -203,6 +302,8 @@ go-exc/
 - ✅ Private Channels (account, positions, orders)
 - ✅ Public Channels (tickers, order books, trades)
 - ✅ Trade Operations (place/cancel orders via WS)
+- ✅ Unified Ticker Subscriptions (works across all exchanges)
+- ✅ Unified Candlestick Subscriptions (works across all exchanges)
 
 ## Development Status
 
@@ -241,8 +342,18 @@ go-exc/
 
 See the [examples/](examples/) directory for complete usage examples:
 
-- `examples/okex/` - OKEx specific examples
-- `examples/books.go` - WebSocket order book subscription
+**Unified Interface Examples:**
+- `examples/simple_example/` - Single exchange usage with unified interface
+- `examples/getconfig_example/` - Handling unsupported features gracefully
+- `examples/websocket_tickers/` - Real-time ticker subscriptions via WebSocket
+- `examples/websocket_candles/` - Real-time candlestick/kline subscriptions via WebSocket
+- `examples/websocket_tickers_dynamic/` - Dynamic ticker subscription example
+
+**Native Client Examples:**
+- `examples/bitmart_rest/` - BitMart REST API usage
+- `examples/bitmart_ws/` - BitMart WebSocket subscriptions
+- `examples/okex_rest/` - OKEx REST API usage
+- `examples/okex_ws/` - OKEx WebSocket subscriptions
 
 ## Dependencies
 

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	tradereq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/trade"
 	accountreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/account"
-	marketreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/market"
+	"github.com/djpken/go-exc/exchanges/bitmart/requests/rest/contract"
 	fundingreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/funding"
+	marketreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/market"
+	tradereq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/trade"
 	"github.com/djpken/go-exc/exchanges/bitmart/rest"
 	commontypes "github.com/djpken/go-exc/types"
 )
@@ -134,7 +135,7 @@ func (a *AccountAPIAdapter) GetBalance(ctx context.Context) (*commontypes.Accoun
 		return nil, err
 	}
 
-	return a.converter.ConvertAccountBalance(balances.Data.Balances), nil
+	return a.converter.ConvertAccountBalance(balances.Data.Wallet), nil
 }
 
 // GetPositions gets account positions (not supported for spot trading)
@@ -159,6 +160,33 @@ func (a *MarketAPIAdapter) GetTicker(ctx context.Context, symbol string) (*commo
 	return a.converter.ConvertTicker(&ticker.Data), nil
 }
 
+// GetTickers gets ticker information for all symbols
+func (a *MarketAPIAdapter) GetTickers(ctx context.Context) ([]*commontypes.Ticker, error) {
+	return nil, commontypes.ErrNotSupported
+}
+
+// GetInstruments gets trading instrument information
+func (a *MarketAPIAdapter) GetInstruments(ctx context.Context) ([]*commontypes.Instrument, error) {
+	// Get all symbols
+	resp, err := a.client.Contract.GetContractDetails(
+		contract.GetContractDetailsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	// For each symbol, get detailed information
+	instruments := make([]*commontypes.Instrument, 0, len(resp.Data.Symbols))
+	for _, symbol := range resp.Data.Symbols {
+
+		instrument := a.converter.ConvertInstrument(&symbol)
+		if instrument != nil {
+			instruments = append(instruments, instrument)
+		}
+	}
+
+	return instruments, nil
+}
+
 // GetOrderBook gets order book
 func (a *MarketAPIAdapter) GetOrderBook(ctx context.Context, symbol string, depth int) (*commontypes.OrderBook, error) {
 	validDepth := 20 // default
@@ -178,6 +206,48 @@ func (a *MarketAPIAdapter) GetOrderBook(ctx context.Context, symbol string, dept
 	}
 
 	return a.converter.ConvertOrderBook(&orderBook.Data, symbol), nil
+}
+
+// GetCandles gets historical candlestick/kline data
+func (a *MarketAPIAdapter) GetCandles(ctx context.Context, req commontypes.GetCandlesRequest) ([]*commontypes.Candle, error) {
+	// Convert interval to BitMart step (in minutes)
+	step, err := a.converter.ConvertIntervalToStep(req.Interval)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build BitMart request
+	bitmartReq := marketreq.GetKlineRequest{
+		Symbol: req.Symbol,
+		Step:   step,
+		Limit:  req.Limit,
+	}
+
+	// Set time range if specified
+	if req.StartTime != nil {
+		bitmartReq.FromTime = req.StartTime.Unix()
+	}
+	if req.EndTime != nil {
+		bitmartReq.ToTime = req.EndTime.Unix()
+	}
+
+	// Call BitMart API
+	resp, err := a.client.Market.GetKlines(bitmartReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert response to common types
+	// BitMart returns: [timestamp, open, high, low, close, volume, quote_volume]
+	candles := make([]*commontypes.Candle, 0, len(resp.Data))
+	for _, klineData := range resp.Data {
+		candle := a.converter.ConvertKlineArrayToCandle(klineData, req.Symbol, req.Interval)
+		if candle != nil {
+			candles = append(candles, candle)
+		}
+	}
+
+	return candles, nil
 }
 
 // FundingAPIAdapter implements funding operations

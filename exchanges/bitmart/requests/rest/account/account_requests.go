@@ -7,5 +7,6 @@ type GetBalanceRequest struct {
 
 // GetWalletBalanceRequest represents request for getting wallet balance
 type GetWalletBalanceRequest struct {
-	WalletType string `json:"wallet_type,omitempty"` // spot, margin, futures
+	Currency           string `json:"currency,omitempty"`             // Optional: specific currency, e.g., BTC
+	NeedUsdValuation   bool   `json:"need_usd_valuation,omitempty"`   // Optional: whether to return USD valuation, default false
 }

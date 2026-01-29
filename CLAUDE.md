@@ -68,6 +68,21 @@ type Exchange interface {
     GetOrder(ctx, req) (*Order, error)
     GetDepositAddress(ctx, currency) (string, error)
     Withdraw(ctx, req) (string, error)
+
+    // WebSocket Subscriptions - real-time data streams
+    SubscribeTickers(ch, symbols...) error          // ✅ All exchanges supported
+    UnsubscribeTickers(symbols...) error            // ✅ All exchanges supported
+    SubscribeCandles(ch, interval, symbols...) error // ✅ All exchanges supported
+    UnsubscribeCandles(interval, symbols...) error   // ✅ All exchanges supported
+    SubscribeBalanceAndPosition(ch) error           // ⚠️ BitMart: not supported
+    UnsubscribeBalanceAndPosition() error           // ⚠️ BitMart: not supported
+    SubscribeAccount(ch, currencies...) error       // ⚠️ BitMart: not supported
+    UnsubscribeAccount(currencies...) error         // ⚠️ BitMart: not supported
+    SubscribePosition(ch, req) error                // ⚠️ BitMart: not supported
+    UnsubscribePosition(req) error                  // ⚠️ BitMart: not supported
+    SubscribeOrders(ch, req) error                  // ⚠️ BitMart: not supported
+    UnsubscribeOrders(req) error                    // ⚠️ BitMart: not supported
+    SetChannels(errCh, subCh, unsubCh, ...) error   // ⚠️ BitMart: not supported
 }
 ```
 
@@ -125,12 +140,15 @@ go-exc/
 │       ├── ws_adapter.go   # WebSocket adapter
 │       └── rest/           # Native REST API
 └── examples/
-    ├── simple_example/     # Single exchange usage (unified interface)
-    ├── getconfig_example/  # Handling unsupported features
-    ├── bitmart_rest/       # BitMart REST API (native client)
-    ├── bitmart_ws/         # BitMart WebSocket (native client)
-    ├── okex_rest/          # OKEx REST API (native client)
-    └── okex_ws/            # OKEx WebSocket (native client)
+    ├── simple_example/         # Single exchange usage (unified interface)
+    ├── getconfig_example/      # Handling unsupported features
+    ├── websocket_tickers/      # WebSocket ticker subscriptions (unified interface)
+    ├── websocket_candles/      # WebSocket candle/kline subscriptions (unified interface)
+    ├── websocket_tickers_dynamic/ # Dynamic ticker subscription example
+    ├── bitmart_rest/           # BitMart REST API (native client)
+    ├── bitmart_ws/             # BitMart WebSocket (native client)
+    ├── okex_rest/              # OKEx REST API (native client)
+    └── okex_ws/                # OKEx WebSocket (native client)
 ```
 
 ## Configuration
@@ -235,10 +253,23 @@ if errors.Is(err, exc.ErrNotSupported) {
 }
 ```
 
+**Unified WebSocket Features:**
+| Method | BitMart | OKEx |
+|--------|---------|------|
+| `SubscribeTickers()` | ✅ | ✅ |
+| `UnsubscribeTickers()` | ✅ | ✅ |
+
 **Unsupported Features:**
 | Method | BitMart | OKEx |
 |--------|---------|------|
 | `GetConfig()` | ❌ | ✅ |
+| `SubscribeBalanceAndPosition()` | ❌ | ✅ |
+| `SubscribeAccount()` | ❌ | ✅ |
+| `SubscribePosition()` | ❌ | ✅ |
+| `SubscribeOrders()` | ❌ | ✅ |
+| `SetChannels()` | ❌ | ✅ |
+
+**Note:** For BitMart WebSocket features, use the native WebSocket client directly via `client.WebSocket()`.
 
 ## Writing Exchange-Agnostic Code
 
@@ -307,6 +338,101 @@ if errors.Is(err, exc.ErrNotSupported) {
     // Continue with other operations...
 }
 ```
+
+### `examples/websocket_tickers/` - WebSocket Ticker Subscriptions
+
+**Purpose:** Demonstrates real-time ticker updates via WebSocket using the unified `Exchange` interface
+
+**Key Concept:** Same WebSocket subscription code works for all exchanges - just change one constant!
+
+**Key Features:**
+- Real-time ticker updates via WebSocket
+- Works with both BitMart and OKEx (and any future exchanges)
+- No API credentials required for public ticker data
+- Graceful shutdown with signal handling
+- Comprehensive ticker information (price, volume, 24h change, etc.)
+
+```go
+// 1. Create channel for ticker updates
+tickerCh := make(chan *exc.TickerUpdate, 100)
+
+// 2. Subscribe to symbols
+err := client.SubscribeTickers(tickerCh, "BTC-USDT", "ETH-USDT")
+
+// 3. Process real-time updates
+for update := range tickerCh {
+    fmt.Printf("%s: %s (24h change: %s%%)\n",
+        update.Symbol, update.LastPrice, update.PercentChange24h)
+}
+
+// 4. Unsubscribe when done
+err := client.UnsubscribeTickers("BTC-USDT", "ETH-USDT")
+```
+
+### `examples/websocket_candles/` - WebSocket Candlestick Subscriptions
+
+**Purpose:** Demonstrates real-time candlestick/kline updates via WebSocket using the unified `Exchange` interface
+
+**Key Concept:** Subscribe to real-time K-line data with multiple intervals
+
+**Key Features:**
+- Real-time candlestick (K-line) updates via WebSocket
+- Works with both BitMart and OKEx (and any future exchanges)
+- Multiple interval support (1m, 5m, 1H, 1D, etc.)
+- Confirmed status indicator (closed vs forming candles)
+- No API credentials required for public candle data
+- Graceful shutdown with signal handling
+
+```go
+// 1. Create channel for candle updates
+candleCh := make(chan *exc.CandleUpdate, 100)
+
+// 2. Subscribe to symbols with specific interval
+err := client.SubscribeCandles(candleCh, "1m", "BTC-USDT", "ETH-USDT")
+
+// 3. Process real-time candle updates
+for update := range candleCh {
+    if update.Confirmed {
+        fmt.Printf("%s candle closed: O=%s H=%s L=%s C=%s\n",
+            update.Symbol, update.Open, update.High, update.Low, update.Close)
+    } else {
+        fmt.Printf("%s candle forming: Current=%s\n",
+            update.Symbol, update.Close)
+    }
+}
+
+// 4. Unsubscribe when done
+err := client.UnsubscribeCandles("1m", "BTC-USDT", "ETH-USDT")
+client, _ := exc.NewExchange(ctx, EXCHANGE_TYPE, config)
+
+// 3. Subscribe - same code for all exchanges!
+updateCh := make(chan *exc.BalanceAndPositionUpdate, 10)
+err := client.SubscribeBalanceAndPosition(updateCh)
+
+// 4. Handle unsupported features gracefully
+if errors.Is(err, exc.ErrNotSupported) {
+    log.Println("Feature not supported by this exchange")
+}
+
+// Subscribe to orders for specific instrument type
+orderCh := make(chan *exc.OrderUpdate, 10)
+req := exc.WebSocketSubscribeRequest{
+    InstrumentType: "SWAP",
+    Symbols: []string{"BTC-USDT-SWAP"},
+}
+err := client.SubscribeOrders(orderCh, req)
+
+// Setup event channels
+errCh := make(chan *exc.WebSocketError, 10)
+subCh := make(chan *exc.WebSocketSubscribe, 10)
+err := client.SetChannels(errCh, subCh, unsubCh, loginCh, successCh)
+```
+
+**Important Notes:**
+- Requires valid API credentials with WebSocket permissions
+- Currently only supported by OKEx (BitMart returns `ErrNotSupported`)
+- Demonstrates the power of the unified `Exchange` interface
+- For exchange-specific features, use the native client directly
 
 ### Native API Examples
 

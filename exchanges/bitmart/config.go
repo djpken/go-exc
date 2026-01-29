@@ -40,27 +40,25 @@ func (c *Config) Validate() error {
 
 // GetBaseURL returns the base URL for REST API
 func (c *Config) GetBaseURL() string {
-	if c.BaseURL != "" {
-		return c.BaseURL
-	}
-	return string(types.ProductionServer)
+	return c.BaseURL
 }
 
 // GetWSBaseURL returns the base URL for WebSocket API
 func (c *Config) GetWSBaseURL() string {
-	if c.WSBaseURL != "" {
-		return c.WSBaseURL
-	}
-	return string(types.ProductionWSServer)
+	return c.WSBaseURL
 }
 
 // NewDefaultConfig creates a new default configuration
-func NewDefaultConfig(apiKey, secretKey, memo string) *Config {
+func NewDefaultConfig(apiKey, secretKey, memo string, testMode bool) *Config {
+	baseURL := string(types.ProductionSwapServer)
+	if testMode {
+		baseURL = string(types.DemoSwapServer)
+	}
 	return &Config{
 		APIKey:    apiKey,
 		SecretKey: secretKey,
 		Memo:      memo,
-		BaseURL:   string(types.ProductionServer),
-		WSBaseURL: string(types.ProductionWSServer),
+		BaseURL:   baseURL,
+		WSBaseURL: string(types.ProductionAPIWSServer),
 	}
 }

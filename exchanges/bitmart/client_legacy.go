@@ -21,8 +21,8 @@ type Client struct {
 }
 
 // NewClient creates a new BitMart native client
-func NewClient(ctx context.Context, apiKey, secretKey, memo string) (*Client, error) {
-	config := NewDefaultConfig(apiKey, secretKey, memo)
+func NewClient(ctx context.Context, apiKey, secretKey, memo string, testMode bool) (*Client, error) {
+	config := NewDefaultConfig(apiKey, secretKey, memo, testMode)
 
 	if err := config.Validate(); err != nil {
 		return nil, err

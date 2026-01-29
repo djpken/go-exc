@@ -22,10 +22,11 @@ type ClientRest struct {
 	baseURL    string
 
 	// API endpoints
-	Market  *Market
-	Account *Account
-	Trade   *Trade
-	Funding *Funding
+	Market   *Market
+	Account  *Account
+	Trade    *Trade
+	Funding  *Funding
+	Contract *Contract
 }
 
 // Config interface for BitMart configuration
@@ -80,6 +81,7 @@ func NewClientRest(ctx context.Context, cfg Config) (*ClientRest, error) {
 	client.Account = NewAccount(client)
 	client.Trade = NewTrade(client)
 	client.Funding = NewFunding(client)
+	client.Contract = NewContract(client)
 
 	return client, nil
 }
@@ -104,7 +106,7 @@ func (c *ClientRest) doRequest(method, endpoint string, body interface{}, result
 
 	// Set headers
 	timestamp := utils.GetTimestamp()
-	sign := utils.GenerateSignature(timestamp, string(reqBody), c.secretKey)
+	sign := utils.GenerateSignature(timestamp, c.memo, string(reqBody), c.secretKey)
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-BM-KEY", c.apiKey)

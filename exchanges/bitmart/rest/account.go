@@ -17,32 +17,33 @@ func NewAccount(c *ClientRest) *Account {
 	return &Account{client: c}
 }
 
-// GetBalance retrieves account balance
-//
-// API: GET /spot/v1/wallet
-func (a *Account) GetBalance(req account.GetBalanceRequest) (*responses.BalanceResponse, error) {
-	endpoint := "/spot/v1/wallet"
-
-	if req.Currency != "" {
-		endpoint += fmt.Sprintf("?currency=%s", req.Currency)
-	}
-
-	var result responses.BalanceResponse
-	if err := a.client.GET(endpoint, &result); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
-// GetWalletBalance retrieves wallet balance by wallet type
+// GetWalletBalance retrieves wallet balance
 //
 // API: GET /account/v1/wallet
+// Parameters:
+//   - currency: Optional currency code (e.g., "BTC")
+//   - needUsdValuation: Optional flag to return USD valuation (default: false)
 func (a *Account) GetWalletBalance(req account.GetWalletBalanceRequest) (*responses.WalletBalanceResponse, error) {
 	endpoint := "/account/v1/wallet"
 
-	if req.WalletType != "" {
-		endpoint += fmt.Sprintf("?wallet_type=%s", req.WalletType)
+	// Build query parameters
+	params := []string{}
+	if req.Currency != "" {
+		params = append(params, fmt.Sprintf("currency=%s", req.Currency))
+	}
+	if req.NeedUsdValuation {
+		params = append(params, "needUsdValuation=true")
+	}
+
+	// Add query parameters to endpoint
+	if len(params) > 0 {
+		endpoint += "?"
+		for i, param := range params {
+			if i > 0 {
+				endpoint += "&"
+			}
+			endpoint += param
+		}
 	}
 
 	var result responses.WalletBalanceResponse

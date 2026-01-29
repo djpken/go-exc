@@ -190,6 +190,8 @@ func (c *ConstantsConverter) FromOKExMarginMode(mode okexconstants.MarginMode) c
 // ToOKExInstrumentType 將共用 InstrumentType 轉換為 OKEx InstrumentType
 func (c *ConstantsConverter) ToOKExInstrumentType(instType commontypes.InstrumentType) okexconstants.InstrumentType {
 	switch instType {
+	case commontypes.InstrumentAny:
+		return okexconstants.AnyInstrument
 	case commontypes.InstrumentSpot:
 		return okexconstants.SpotInstrument
 	case commontypes.InstrumentMargin:
@@ -201,7 +203,7 @@ func (c *ConstantsConverter) ToOKExInstrumentType(instType commontypes.Instrumen
 	case commontypes.InstrumentOption:
 		return okexconstants.OptionsInstrument
 	default:
-		return okexconstants.InstrumentType(instType)
+		return okexconstants.AnyInstrument
 	}
 }
 

@@ -10,8 +10,9 @@ import (
 )
 
 // GenerateSignature generates HMAC-SHA256 signature for BitMart API
-func GenerateSignature(timestamp, body, secretKey string) string {
-	message := timestamp + "#" + "bitmart.WebSocket" + "#" + body
+// Signature format: hmac_sha256(secretKey, timestamp + '#' + memo + '#' + body)
+func GenerateSignature(timestamp, memo, body, secretKey string) string {
+	message := timestamp + "#" + memo + "#" + body
 	mac := hmac.New(sha256.New, []byte(secretKey))
 	mac.Write([]byte(message))
 	return hex.EncodeToString(mac.Sum(nil))

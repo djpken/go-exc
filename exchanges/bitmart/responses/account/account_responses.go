@@ -9,16 +9,11 @@ type BaseResponse struct {
 	Trace   string `json:"trace"`
 }
 
-// BalanceResponse represents account balance API response
-type BalanceResponse struct {
-	BaseResponse
-	Data struct {
-		Wallet []account.Balance `json:"wallet"`
-	} `json:"data"`
-}
-
 // WalletBalanceResponse represents wallet balance API response
+// API: GET /account/v1/wallet
 type WalletBalanceResponse struct {
 	BaseResponse
-	Data account.WalletBalance `json:"data"`
+	Data struct {
+		Wallet []account.Balance `json:"wallet"` // Array of wallet balances
+	} `json:"data"`
 }

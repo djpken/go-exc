@@ -16,7 +16,7 @@ func NewExchange(ctx context.Context, exchangeType ExchangeType, cfg Config) (Ex
 		return newOKExExchange(ctx, cfg, true)
 	case BitMart:
 		return newBitMartExchange(ctx, cfg, false)
-	case BitMartTEST:
+	case BitMartTest:
 		return newBitMartExchange(ctx, cfg, true)
 	case BingX:
 		return nil, ErrNotImplemented

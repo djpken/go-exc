@@ -15,20 +15,45 @@ type (
 	Ticker        = types.Ticker
 	OrderBook     = types.OrderBook
 	AccountConfig = types.AccountConfig
+	Instrument    = types.Instrument
+	Candle        = types.Candle
 
 	// Request types
-	PlaceOrderRequest  = types.PlaceOrderRequest
-	CancelOrderRequest = types.CancelOrderRequest
-	GetOrderRequest    = types.GetOrderRequest
-	WithdrawRequest    = types.WithdrawRequest
+	PlaceOrderRequest     = types.PlaceOrderRequest
+	CancelOrderRequest    = types.CancelOrderRequest
+	GetOrderRequest       = types.GetOrderRequest
+	WithdrawRequest       = types.WithdrawRequest
+	SetLeverageRequest    = types.SetLeverageRequest
+	GetLeverageRequest    = types.GetLeverageRequest
+	GetInstrumentsRequest = types.GetInstrumentsRequest
+	GetTickersRequest     = types.GetTickersRequest
+	GetCandlesRequest     = types.GetCandlesRequest
+	Leverage              = types.Leverage
+
+	// WebSocket types
+	BalanceAndPositionUpdate  = types.BalanceAndPositionUpdate
+	AccountUpdate             = types.AccountUpdate
+	PositionUpdate            = types.PositionUpdate
+	OrderUpdate               = types.OrderUpdate
+	TickerUpdate              = types.TickerUpdate
+	CandleUpdate              = types.CandleUpdate
+	WebSocketSubscribeRequest = types.WebSocketSubscribeRequest
+	WebSocketError            = types.WebSocketError
+	WebSocketSubscribe        = types.WebSocketSubscribe
+	WebSocketUnsubscribe      = types.WebSocketUnsubscribe
+	WebSocketLogin            = types.WebSocketLogin
+	WebSocketSuccess          = types.WebSocketSuccess
+	WebSocketSystemMessage    = types.WebSocketSystemMessage
+	WebSocketSystemError      = types.WebSocketSystemError
 )
 
 // Exchange represents a cryptocurrency exchange with a unified API interface.
 // All exchanges implement the same methods, allowing you to write exchange-agnostic code.
 //
 // Usage:
-//   client, _ := exc.NewExchange(ctx, exc.BitMart, config)
-//   ticker, _ := client.GetTicker(ctx, "BTC_USDT")  // Works for all exchanges
+//
+//	client, _ := exc.NewExchange(ctx, exc.BitMart, config)
+//	ticker, _ := client.GetTicker(ctx, "BTC_USDT")  // Works for all exchanges
 type Exchange interface {
 	// ========== Basic Methods ==========
 
@@ -60,11 +85,20 @@ type Exchange interface {
 	// Returns: Ticker with price, volume, and timestamp information
 	GetTicker(ctx context.Context, symbol string) (*Ticker, error)
 
-	// GetOrderBook gets the order book (bids and asks) for a symbol
-	// symbol: Trading pair symbol
-	// depth: Number of price levels to retrieve (e.g., 5, 20, 50)
-	// Returns: OrderBook with bids and asks at each price level
-	GetOrderBook(ctx context.Context, symbol string, depth int) (*OrderBook, error)
+	// GetTickers gets ticker information for all trading pairs
+	// req: GetTickersRequest with optional instrument type filter
+	// Returns: List of Ticker objects for all available symbols
+	GetTickers(ctx context.Context, req GetTickersRequest) ([]*Ticker, error)
+
+	// GetInstruments gets information about available trading instruments
+	// req: GetInstrumentsRequest with optional instrument type filter
+	// Returns: List of Instrument objects with trading pair details
+	GetInstruments(ctx context.Context, req GetInstrumentsRequest) ([]*Instrument, error)
+
+	// GetCandles gets historical candlestick/kline data
+	// req: GetCandlesRequest with symbol, interval, limit, and optional time range
+	// Returns: List of Candle objects with OHLCV data
+	GetCandles(ctx context.Context, req GetCandlesRequest) ([]*Candle, error)
 
 	// --- Account Information ---
 
@@ -84,6 +118,18 @@ type Exchange interface {
 	// Note: Returns empty list for spot-only exchanges like BitMart
 	GetPositions(ctx context.Context, symbols ...string) ([]*Position, error)
 
+	// GetLeverage gets leverage configuration for trading pairs
+	// req: GetLeverageRequest with symbols and margin mode
+	// Returns: List of Leverage objects with current leverage settings
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	GetLeverage(ctx context.Context, req GetLeverageRequest) ([]*Leverage, error)
+
+	// SetLeverage sets leverage for a trading pair
+	// req: SetLeverageRequest with symbol/currency, leverage multiplier, margin mode
+	// Returns: Updated Leverage object
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	SetLeverage(ctx context.Context, req SetLeverageRequest) (*Leverage, error)
+
 	// --- Trading Operations ---
 
 	// PlaceOrder places a new order on the exchange
@@ -101,17 +147,100 @@ type Exchange interface {
 	// Returns: Order object with current status, filled quantity, etc.
 	GetOrder(ctx context.Context, req GetOrderRequest) (*Order, error)
 
-	// --- Funding Operations ---
+	// --- WebSocket Subscriptions ---
 
-	// GetDepositAddress gets the deposit address for a currency
-	// currency: Currency code (e.g., "USDT", "BTC")
-	// Returns: Deposit address string (may include tag/memo separated by ":")
-	GetDepositAddress(ctx context.Context, currency string) (string, error)
+	// SubscribeTickers subscribes to ticker updates for specified symbols via WebSocket
+	// symbols: List of trading symbols to subscribe to
+	// ch: Channel to receive TickerUpdate events
+	// Returns: Error if subscription failed
+	SubscribeTickers(ch chan *TickerUpdate, symbols ...string) error
 
-	// Withdraw initiates a withdrawal to an external address
-	// req: WithdrawRequest with currency, amount, address, and optional tag
-	// Returns: Withdrawal ID string
-	Withdraw(ctx context.Context, req WithdrawRequest) (string, error)
+	// UnsubscribeTickers unsubscribes from ticker updates for specified symbols
+	// symbols: List of trading symbols to unsubscribe from
+	// Returns: Error if unsubscription failed
+	UnsubscribeTickers(symbols ...string) error
+
+	// SubscribeCandles subscribes to candlestick/kline updates for specified symbols via WebSocket
+	// ch: Channel to receive CandleUpdate events
+	// interval: Candlestick interval (e.g., "1m", "5m", "1H", "1D")
+	// symbols: List of trading symbols to subscribe to
+	// Returns: Error if subscription failed
+	SubscribeCandles(ch chan *CandleUpdate, interval string, symbols ...string) error
+
+	// UnsubscribeCandles unsubscribes from candlestick updates for specified symbols
+	// interval: Candlestick interval
+	// symbols: List of trading symbols to unsubscribe from
+	// Returns: Error if unsubscription failed
+	UnsubscribeCandles(interval string, symbols ...string) error
+
+	// SubscribeBalanceAndPosition subscribes to balance and position updates via WebSocket
+	// ch: Channel to receive BalanceAndPositionUpdate events
+	// Returns: Error if subscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	SubscribeBalanceAndPosition(ch chan *BalanceAndPositionUpdate) error
+
+	// UnsubscribeBalanceAndPosition unsubscribes from balance and position updates
+	// Returns: Error if unsubscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	UnsubscribeBalanceAndPosition() error
+
+	// SubscribeAccount subscribes to account balance updates via WebSocket
+	// currencies: Optional list of currencies to subscribe (empty = all currencies)
+	// ch: Channel to receive AccountUpdate events
+	// Returns: Error if subscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	SubscribeAccount(ch chan *AccountUpdate, currencies ...string) error
+
+	// UnsubscribeAccount unsubscribes from account balance updates
+	// currencies: Optional list of currencies to unsubscribe (empty = all currencies)
+	// Returns: Error if unsubscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	UnsubscribeAccount(currencies ...string) error
+
+	// SubscribePosition subscribes to position updates via WebSocket
+	// ch: Channel to receive PositionUpdate events
+	// req: WebSocketSubscribeRequest with subscription parameters
+	// Returns: Error if subscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	SubscribePosition(ch chan *PositionUpdate, req WebSocketSubscribeRequest) error
+
+	// UnsubscribePosition unsubscribes from position updates
+	// req: WebSocketSubscribeRequest with subscription parameters
+	// Returns: Error if unsubscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	UnsubscribePosition(req WebSocketSubscribeRequest) error
+
+	// SubscribeOrders subscribes to order updates via WebSocket
+	// ch: Channel to receive OrderUpdate events
+	// req: WebSocketSubscribeRequest with subscription parameters
+	// Returns: Error if subscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	SubscribeOrders(ch chan *OrderUpdate, req WebSocketSubscribeRequest) error
+
+	// UnsubscribeOrders unsubscribes from order updates
+	// req: WebSocketSubscribeRequest with subscription parameters
+	// Returns: Error if unsubscription failed
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	UnsubscribeOrders(req WebSocketSubscribeRequest) error
+
+	// SetChannels sets channels for receiving WebSocket events
+	// errCh: Channel to receive error events
+	// subCh: Channel to receive subscription events
+	// unsubCh: Channel to receive unsubscription events
+	// loginCh: Channel to receive login events
+	// successCh: Channel to receive success events
+	// systemMsgCh: Channel to receive system messages (connection, reconnection, etc.)
+	// systemErrCh: Channel to receive system errors (connection failures, etc.)
+	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	SetChannels(
+		errCh chan *WebSocketError,
+		subCh chan *WebSocketSubscribe,
+		unsubCh chan *WebSocketUnsubscribe,
+		loginCh chan *WebSocketLogin,
+		successCh chan *WebSocketSuccess,
+		systemMsgCh chan *WebSocketSystemMessage,
+		systemErrCh chan *WebSocketSystemError,
+	) error
 }
 
 // RESTClient provides access to REST API endpoints
