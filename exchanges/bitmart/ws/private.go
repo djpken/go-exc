@@ -11,9 +11,11 @@ import (
 // Private provides access to BitMart private WebSocket channels
 type Private struct {
 	*ClientWs
-	orderCh   chan *private.OrderEvent
-	balanceCh chan *private.BalanceEvent
-	tradeCh   chan *private.TradeEvent
+	orderCh          chan *private.OrderEvent
+	balanceCh        chan *private.BalanceEvent
+	tradeCh          chan *private.TradeEvent
+	futuresAssetCh   chan *private.FuturesAssetEvent
+	futuresPositionCh chan *private.FuturesPositionEvent
 }
 
 // NewPrivate creates a new Private instance
@@ -160,4 +162,138 @@ func (p *Private) GetBalanceChan() chan *private.BalanceEvent {
 // GetTradeChan returns the trade channel
 func (p *Private) GetTradeChan() chan *private.TradeEvent {
 	return p.tradeCh
+}
+
+// SubscribeFuturesAsset subscribes to futures asset balance update channel
+//
+// Channel: futures/asset:CURRENCY (e.g., futures/asset:USDT, futures/asset:BTC, futures/asset:ETH)
+// Requires authentication
+//
+// Example:
+//   err := client.Private.SubscribeFuturesAsset(assetCh, "USDT", "BTC")
+func (p *Private) SubscribeFuturesAsset(ch chan *private.FuturesAssetEvent, currencies ...string) error {
+	if !p.IsAuthenticated() {
+		return errors.New("not authenticated, please call Login() first")
+	}
+
+	if len(currencies) == 0 {
+		return errors.New("at least one currency must be specified")
+	}
+
+	p.futuresAssetCh = ch
+
+	// Build channel list: futures/asset:CURRENCY
+	channels := make([]string, len(currencies))
+	for i, currency := range currencies {
+		channels[i] = fmt.Sprintf("futures/asset:%s", currency)
+	}
+
+	// Register message handler for each channel
+	for _, channel := range channels {
+		p.RegisterHandler(channel, func(data []byte) {
+			var event private.FuturesAssetEvent
+			if err := json.Unmarshal(data, &event); err != nil {
+				fmt.Printf("Failed to unmarshal futures asset event: %v\n", err)
+				return
+			}
+			select {
+			case p.futuresAssetCh <- &event:
+			default:
+				// Channel full, drop message
+			}
+		})
+	}
+
+	// Subscribe to all channels at once
+	subscribeMsg := map[string]interface{}{
+		"action": "subscribe",
+		"args":   channels,
+	}
+
+	// fmt.Printf("[WS] Subscribing to futures asset channels: %v\n", channels)
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.conn.WriteJSON(subscribeMsg)
+}
+
+// UnsubscribeFuturesAsset unsubscribes from futures asset channels
+func (p *Private) UnsubscribeFuturesAsset(currencies ...string) error {
+	if len(currencies) == 0 {
+		return errors.New("at least one currency must be specified")
+	}
+
+	// Build channel list
+	channels := make([]string, len(currencies))
+	for i, currency := range currencies {
+		channels[i] = fmt.Sprintf("futures/asset:%s", currency)
+	}
+
+	// Unregister handlers
+	for _, channel := range channels {
+		p.UnregisterHandler(channel)
+	}
+
+	// Unsubscribe from all channels at once
+	unsubscribeMsg := map[string]interface{}{
+		"action": "unsubscribe",
+		"args":   channels,
+	}
+
+	// fmt.Printf("[WS] Unsubscribing from futures asset channels: %v\n", channels)
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.conn.WriteJSON(unsubscribeMsg)
+}
+
+// SubscribeFuturesPosition subscribes to futures position update channel
+//
+// Channel: futures/position
+// Requires authentication
+//
+// Example:
+//   err := client.Private.SubscribeFuturesPosition(positionCh)
+func (p *Private) SubscribeFuturesPosition(ch chan *private.FuturesPositionEvent) error {
+	if !p.IsAuthenticated() {
+		return errors.New("not authenticated, please call Login() first")
+	}
+
+	p.futuresPositionCh = ch
+
+	channel := "futures/position"
+
+	// Register message handler
+	p.RegisterHandler(channel, func(data []byte) {
+		var event private.FuturesPositionEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			fmt.Printf("Failed to unmarshal futures position event: %v\n", err)
+			return
+		}
+		select {
+		case p.futuresPositionCh <- &event:
+		default:
+			// Channel full, drop message
+		}
+	})
+
+	return p.Subscribe(channel)
+}
+
+// UnsubscribeFuturesPosition unsubscribes from futures position channel
+func (p *Private) UnsubscribeFuturesPosition() error {
+	channel := "futures/position"
+	p.UnregisterHandler(channel)
+
+	return p.Unsubscribe(channel)
+}
+
+// GetFuturesAssetChan returns the futures asset channel
+func (p *Private) GetFuturesAssetChan() chan *private.FuturesAssetEvent {
+	return p.futuresAssetCh
+}
+
+// GetFuturesPositionChan returns the futures position channel
+func (p *Private) GetFuturesPositionChan() chan *private.FuturesPositionEvent {
+	return p.futuresPositionCh
 }

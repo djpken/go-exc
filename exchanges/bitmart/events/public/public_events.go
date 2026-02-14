@@ -48,3 +48,24 @@ type KlineEvent struct {
 	Volume      string `json:"volume"`
 	QuoteVolume string `json:"quote_volume"`
 }
+
+// FuturesTickerEvent represents futures ticker WebSocket event
+// This matches the actual BitMart futures ticker response format
+type FuturesTickerEvent struct {
+	Group string             `json:"group"` // e.g., "futures/ticker:ETHUSDT"
+	Data  FuturesTickerData  `json:"data"`
+}
+
+// FuturesTickerData represents the data field in futures ticker event
+type FuturesTickerData struct {
+	Symbol     string `json:"symbol"`      // Contract symbol (e.g., "ETHUSDT")
+	LastPrice  string `json:"last_price"`  // Last traded price
+	Volume24   string `json:"volume_24"`   // 24h trading volume
+	Range      string `json:"range"`       // 24h price change ratio
+	MarkPrice  string `json:"mark_price"`  // Mark price
+	IndexPrice string `json:"index_price"` // Index price
+	AskPrice   string `json:"ask_price"`   // Best ask price
+	AskVol     string `json:"ask_vol"`     // Best ask volume
+	BidPrice   string `json:"bid_price"`   // Best bid price
+	BidVol     string `json:"bid_vol"`     // Best bid volume
+}

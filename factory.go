@@ -50,15 +50,3 @@ func newBitMartExchange(ctx context.Context, cfg Config, testMode bool) (Exchang
 	}
 	return client, nil
 }
-
-// NewOKExClient creates a native OKEx client directly
-// This is the recommended way to use OKEx for now
-func NewOKExClient(ctx context.Context, apiKey, secretKey, passphrase string, testMode bool) (*okex.OKExExchange, error) {
-	return okex.NewOKExExchange(ctx, apiKey, secretKey, passphrase, testMode)
-}
-
-// NewBitMartClient creates a native BitMart client directly
-// This is the recommended way to use BitMart for now
-func NewBitMartClient(ctx context.Context, apiKey, secretKey, memo string) (*bitmart.BitMartExchange, error) {
-	return bitmart.NewBitMartExchange(ctx, apiKey, secretKey, memo, false)
-}

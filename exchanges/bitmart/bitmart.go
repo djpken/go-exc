@@ -109,39 +109,36 @@ func (e *BitMartExchange) GetCandles(ctx context.Context, req commontypes.GetCan
 }
 
 // GetBalance gets account balance
-func (e *BitMartExchange) GetBalance(ctx context.Context, currencies ...string) (*commontypes.AccountBalance, error) {
-	return e.restAPI.Account().GetBalance(ctx)
+// Supports both spot and futures accounts
+//
+// Usage:
+//   - Spot account: GetBalance(ctx) or GetBalance(ctx, "USDT", "BTC")
+//   - Futures account: GetBalance(ctx, types.AccountTypeFutures) or GetBalance(ctx, types.AccountTypeFutures, "USDT", "BTC")
+func (e *BitMartExchange) GetBalance(ctx context.Context, typee string, currencies ...string) (*commontypes.AccountBalance, error) {
+	return e.restAPI.Account().GetBalance(ctx, typee, currencies...)
 }
 
 // GetPositions gets account positions
 func (e *BitMartExchange) GetPositions(ctx context.Context, symbols ...string) ([]*commontypes.Position, error) {
-	return e.restAPI.Account().GetPositions(ctx)
+	return e.restAPI.Account().GetPositions(ctx, symbols...)
 }
 
 // GetLeverage gets leverage configuration
-// BitMart does not support this feature
 func (e *BitMartExchange) GetLeverage(ctx context.Context, req commontypes.GetLeverageRequest) ([]*commontypes.Leverage, error) {
-	return nil, commontypes.ErrNotSupported
+	return e.restAPI.Account().GetLeverage(ctx, req.Symbols)
 }
 
 // SetLeverage sets leverage for a trading pair
-// BitMart does not support this feature
 func (e *BitMartExchange) SetLeverage(ctx context.Context, req commontypes.SetLeverageRequest) (*commontypes.Leverage, error) {
-	return nil, commontypes.ErrNotSupported
+	return e.restAPI.Account().SetLeverage(ctx, req)
 }
 
 // PlaceOrder places a new order
 func (e *BitMartExchange) PlaceOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.Order, error) {
-	// Add PosSide to extra parameters if provided
-	// Note: BitMart spot trading doesn't use PosSide, but we keep it for consistency
-	extra := req.Extra
-	if extra == nil {
-		extra = make(map[string]interface{})
+	if req.Extra == nil {
+		req.Extra = make(map[string]interface{})
 	}
-	if req.PosSide != "" {
-		extra["posSide"] = req.PosSide
-	}
-	return e.restAPI.Trade().PlaceOrder(ctx, req.Symbol, req.Side, req.Type, req.Quantity, req.Price, extra)
+	return e.restAPI.Trade().PlaceOrder(ctx, req)
 }
 
 // CancelOrder cancels an existing order
@@ -149,9 +146,9 @@ func (e *BitMartExchange) CancelOrder(ctx context.Context, req commontypes.Cance
 	return e.restAPI.Trade().CancelOrder(ctx, req.Symbol, req.OrderID, req.Extra)
 }
 
-// GetOrder gets order details
-func (e *BitMartExchange) GetOrder(ctx context.Context, req commontypes.GetOrderRequest) (*commontypes.Order, error) {
-	return e.restAPI.Trade().GetOrder(ctx, req.Symbol, req.OrderID, req.Extra)
+// GetOrderDetail gets order details
+func (e *BitMartExchange) GetOrderDetail(ctx context.Context, req commontypes.GetOrderRequest) (*commontypes.Order, error) {
+	return e.restAPI.Trade().GetOrderDetail(ctx, req)
 }
 
 // ========== WebSocket Subscription Methods ==========
@@ -191,27 +188,25 @@ func (e *BitMartExchange) UnsubscribeBalanceAndPosition() error {
 }
 
 // SubscribeAccount subscribes to account balance updates via WebSocket
-// BitMart does not support this feature through the unified interface
+// Maps to BitMart's futures/asset:CURRENCY channels
 func (e *BitMartExchange) SubscribeAccount(ch chan *commontypes.AccountUpdate, currencies ...string) error {
-	return commontypes.ErrNotSupported
+	return e.wsAPI.SubscribeAccount(ch, currencies...)
 }
 
 // UnsubscribeAccount unsubscribes from account balance updates
-// BitMart does not support this feature through the unified interface
 func (e *BitMartExchange) UnsubscribeAccount(currencies ...string) error {
-	return commontypes.ErrNotSupported
+	return e.wsAPI.UnsubscribeAccount(currencies...)
 }
 
 // SubscribePosition subscribes to position updates via WebSocket
-// BitMart does not support this feature through the unified interface
+// Maps to BitMart's futures/position channel
 func (e *BitMartExchange) SubscribePosition(ch chan *commontypes.PositionUpdate, req commontypes.WebSocketSubscribeRequest) error {
-	return commontypes.ErrNotSupported
+	return e.wsAPI.SubscribePosition(ch, req)
 }
 
 // UnsubscribePosition unsubscribes from position updates
-// BitMart does not support this feature through the unified interface
 func (e *BitMartExchange) UnsubscribePosition(req commontypes.WebSocketSubscribeRequest) error {
-	return commontypes.ErrNotSupported
+	return e.wsAPI.UnsubscribePosition(req)
 }
 
 // SubscribeOrders subscribes to order updates via WebSocket
@@ -227,7 +222,7 @@ func (e *BitMartExchange) UnsubscribeOrders(req commontypes.WebSocketSubscribeRe
 }
 
 // SetChannels sets channels for receiving WebSocket events
-// BitMart does not support this feature through the unified interface
+// Allows receiving notifications about connection events, errors, subscriptions, etc.
 func (e *BitMartExchange) SetChannels(
 	errCh chan *commontypes.WebSocketError,
 	subCh chan *commontypes.WebSocketSubscribe,
@@ -237,5 +232,5 @@ func (e *BitMartExchange) SetChannels(
 	systemMsgCh chan *commontypes.WebSocketSystemMessage,
 	systemErrCh chan *commontypes.WebSocketSystemError,
 ) error {
-	return commontypes.ErrNotSupported
+	return e.wsAPI.SetChannels(errCh, subCh, unsubCh, loginCh, successCh, systemMsgCh, systemErrCh)
 }

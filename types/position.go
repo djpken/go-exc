@@ -1,12 +1,36 @@
 package types
 
+type BarSize string
+
+const (
+	Bar1m     BarSize = "1m"
+	Bar3m     BarSize = "3m"
+	Bar5m     BarSize = "5m"
+	Bar15m    BarSize = "15m"
+	Bar30m    BarSize = "30m"
+	Bar1H     BarSize = "1H"
+	Bar2H     BarSize = "2H"
+	Bar4H     BarSize = "4H"
+	Bar6H     BarSize = "6H"
+	Bar12H    BarSize = "12H"
+	Bar6Hutc  BarSize = "6Hutc"
+	Bar12Hutc BarSize = "12Hutc"
+	Bar1Dutc  BarSize = "1Dutc"
+	Bar2Dutc  BarSize = "2Dutc"
+	Bar3Dutc  BarSize = "3Dutc"
+	Bar1Wutc  BarSize = "1Wutc"
+	Bar1Mutc  BarSize = "1Mutc"
+	Bar3Mutc  BarSize = "3Mutc"
+)
+
 // Position represents a trading position
 type Position struct {
 	// Symbol is the trading symbol
 	Symbol string
 
-	// Side is the position side (long/short)
-	Side string
+	// PosSide is the position side (long/short/net)
+	// Use PositionSideLong, PositionSideShort, or PositionSideNet constants
+	PosSide PositionSide
 
 	// Quantity is the position quantity
 	Quantity Decimal
@@ -27,10 +51,11 @@ type Position struct {
 	RealizedPnL Decimal
 
 	// Leverage is the leverage
-	Leverage Decimal
+	Leverage int
 
 	// MarginMode is the margin mode (cross/isolated)
-	MarginMode string
+	// Use MarginModeCross or MarginModeIsolated constants
+	MarginMode MarginMode
 
 	// CreatedAt is the creation time
 	CreatedAt Timestamp
@@ -80,11 +105,12 @@ type Leverage struct {
 	Leverage int
 
 	// MarginMode is the margin mode (cross/isolated)
-	MarginMode string
+	// Use MarginModeCross or MarginModeIsolated constants
+	MarginMode MarginMode
 
-	// PositionSide is the position side (for hedge mode)
-	// Empty for one-way mode
-	PositionSide string
+	// PosSide is the position side (for hedge mode)
+	// Use PositionSideLong, PositionSideShort constants, or empty for one-way mode
+	PosSide PositionSide
 
 	// Extra contains exchange-specific fields
 	Extra map[string]interface{}
@@ -102,11 +128,12 @@ type SetLeverageRequest struct {
 	Leverage int
 
 	// MarginMode is the margin mode (cross/isolated)
-	MarginMode string
+	// Use MarginModeCross or MarginModeIsolated constants
+	MarginMode MarginMode
 
-	// PositionSide is the position side for hedge mode (optional)
-	// Values: "long", "short", or empty for one-way mode
-	PositionSide string
+	// PosSide is the position side for hedge mode (optional)
+	// Use PositionSideLong, PositionSideShort constants, or empty for one-way mode
+	PosSide PositionSide
 
 	// Extra contains exchange-specific parameters
 	Extra map[string]interface{}
@@ -118,7 +145,8 @@ type GetLeverageRequest struct {
 	Symbols []string
 
 	// MarginMode is the margin mode (cross/isolated)
-	MarginMode string
+	// Use MarginModeCross or MarginModeIsolated constants
+	MarginMode MarginMode
 
 	// Extra contains exchange-specific parameters
 	Extra map[string]interface{}

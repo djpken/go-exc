@@ -4,15 +4,13 @@ package types
 type Destination string
 
 const (
-	// ProductionSpotServer is the production API server
-	ProductionSpotServer Destination = "https://api-cloud.bitmart.com"
-	ProductionSwapServer Destination = "https://api-cloud-v2.bitmart.com"
-	DemoSwapServer       Destination = "https://demo-api-cloud-v2.bitmart.com"
+	ProductionSwapServer   Destination = "https://api-cloud-v2.bitmart.com"
+	ProductionAPIWSServer  Destination = "wss://openapi-ws-v2.bitmart.com/api?protocol=1.1"
+	ProductionUserWSServer Destination = "wss://openapi-ws-v2.bitmart.com/user?protocol=1.1"
 
-	// ProductionAPIWSServer is the production WebSocket server
-	ProductionAPIWSServer Destination = "wss://ws-manager-compress.bitmart.com/api?protocol=1.1"
-	DemoAPIWSServer       Destination = "wss://openapi-wsdemo-v2.bitmart.com/api?protocol=1.1"
-	DemoUserWSServer      Destination = "wss://openapi-wsdemo-v2.bitmart.com/user?protocol=1.1"
+	DemoSwapServer   Destination = "https://demo-api-cloud-v2.bitmart.com"
+	DemoAPIWSServer  Destination = "wss://openapi-wsdemo-v2.bitmart.com/api?protocol=1.1"
+	DemoUserWSServer Destination = "wss://openapi-wsdemo-v2.bitmart.com/user?protocol=1.1"
 )
 
 // Common BitMart constants

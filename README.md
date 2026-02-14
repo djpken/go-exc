@@ -287,6 +287,180 @@ go-exc/
         └── events/          # Event types
 ```
 
+## Decimal Type for Precise Financial Calculations
+
+The `Decimal` type is used throughout go-exc for representing monetary values, prices, and quantities with precision. Unlike `float64`, `Decimal` avoids floating-point precision issues that are critical in financial applications.
+
+### Basic Usage
+
+```go
+import exc "github.com/djpken/go-exc"
+
+price := exc.Decimal("45678.50")
+quantity := exc.Decimal("1.5")
+```
+
+### Arithmetic Operations
+
+```go
+// Basic math
+sum, err := price.Add(exc.Decimal("100"))      // price + 100
+diff, err := price.Sub(exc.Decimal("100"))     // price - 100
+product, err := price.Mul(quantity)            // price * quantity
+quotient, err := price.Div(quantity)           // price / quantity
+
+// Unary operations
+abs, err := price.Abs()    // |price|
+neg, err := price.Neg()    // -price
+```
+
+### Comparison Methods
+
+```go
+// Compare
+cmp, err := price1.Cmp(price2)    // Returns -1, 0, or 1
+
+// Boolean comparisons
+isLess, err := price1.LessThan(price2)               // <
+isGreater, err := price1.GreaterThan(price2)         // >
+isEqual, err := price1.Equal(price2)                 // ==
+isLessOrEq, err := price1.LessThanOrEqual(price2)    // <=
+isGreaterOrEq, err := price1.GreaterThanOrEqual(price2) // >=
+```
+
+### Max and Min Operations (New!)
+
+```go
+// Find maximum
+highest, err := price1.Max(price2)
+
+// Find minimum
+lowest, err := price1.Min(price2)
+
+// Chain operations for multiple values
+highest, _ := price1.Max(price2)
+highest, _ = highest.Max(price3)
+```
+
+### Sign Checks (New!)
+
+```go
+// Check if positive (> 0)
+if price.IsPositive() {
+    fmt.Println("Price is positive")
+}
+
+// Check if negative (< 0)
+if pnl.IsNegative() {
+    fmt.Println("Position in loss")
+}
+
+// Check if zero
+if balance.IsZero() {
+    fmt.Println("No balance")
+}
+```
+
+### Practical Examples
+
+**Find Best Execution Price Across Exchanges:**
+```go
+binanceBid := exc.Decimal("45678.50")
+okexBid := exc.Decimal("45679.20")
+
+// Find highest bid for selling
+bestBid, _ := binanceBid.Max(okexBid)
+```
+
+**Risk Management with Stop Loss:**
+```go
+entryPrice := exc.Decimal("50000")
+stopLossPercent := exc.Decimal("0.95")  // 95% (5% loss)
+
+stopLossPrice, _ := entryPrice.Mul(stopLossPercent)
+
+if currentPrice.LessThan(stopLossPrice) {
+    // Trigger stop loss
+}
+```
+
+**Portfolio Analysis:**
+```go
+position1Value, _ := position1Price.Mul(position1Qty)
+position2Value, _ := position2Price.Mul(position2Qty)
+totalValue, _ := position1Value.Add(position2Value)
+
+// Find largest position
+largest, _ := position1Value.Max(position2Value)
+```
+
+For more examples, see [examples/decimal_math/](examples/decimal_math/)
+
+## Type-Safe Constants for Positions and Trading
+
+go-exc uses type-safe constants instead of strings for position sides, margin modes, and instrument types to catch errors at compile time.
+
+### Position Side Constants
+
+```go
+// Use typed constants instead of strings
+position := &exc.Position{
+    Symbol:  "BTC-USDT",
+    PosSide: exc.PositionSideLong,  // Not "long" string!
+}
+
+// Available constants
+exc.PositionSideLong   // Long position
+exc.PositionSideShort  // Short position
+exc.PositionSideNet    // Net position (one-way mode)
+```
+
+### Margin Mode Constants
+
+```go
+// Type-safe margin mode
+position.MarginMode = exc.MarginModeCross     // Not "cross" string!
+
+// Available constants
+exc.MarginModeCross     // Cross margin
+exc.MarginModeIsolated  // Isolated margin
+```
+
+### Instrument Type Constants
+
+```go
+// Query instruments with type-safe constants
+instruments, _ := client.GetInstruments(ctx, exc.GetInstrumentsRequest{
+    InstrumentType: exc.InstrumentSwap,  // Not "swap" string!
+})
+
+// Available constants
+exc.InstrumentSpot      // Spot trading
+exc.InstrumentMargin    // Margin trading
+exc.InstrumentFutures   // Futures contracts
+exc.InstrumentSwap      // Perpetual swaps
+exc.InstrumentOption    // Options
+```
+
+### Setting Leverage (Type-Safe)
+
+```go
+leverage, err := client.SetLeverage(ctx, exc.SetLeverageRequest{
+    Symbol:     "BTC-USDT",
+    Leverage:   10,
+    MarginMode: exc.MarginModeCross,    // Type-safe!
+    PosSide:    exc.PositionSideLong,   // Type-safe!
+})
+```
+
+**Benefits:**
+- ✅ Compile-time type checking (catch typos before runtime)
+- ✅ IDE autocomplete support
+- ✅ Self-documenting code
+- ✅ Safe refactoring
+
+For more examples, see [examples/position_types/](examples/position_types/)
+
 ## Supported OKEx APIs
 
 ### REST API
@@ -345,9 +519,12 @@ See the [examples/](examples/) directory for complete usage examples:
 **Unified Interface Examples:**
 - `examples/simple_example/` - Single exchange usage with unified interface
 - `examples/getconfig_example/` - Handling unsupported features gracefully
+- `examples/get_candles/` - Fetching historical candlestick/kline data
 - `examples/websocket_tickers/` - Real-time ticker subscriptions via WebSocket
 - `examples/websocket_candles/` - Real-time candlestick/kline subscriptions via WebSocket
 - `examples/websocket_tickers_dynamic/` - Dynamic ticker subscription example
+- `examples/decimal_math/` - Decimal type math operations and trading scenarios
+- `examples/position_types/` - Type-safe constants for positions and trading
 
 **Native Client Examples:**
 - `examples/bitmart_rest/` - BitMart REST API usage

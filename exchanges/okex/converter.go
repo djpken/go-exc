@@ -24,6 +24,20 @@ func NewConverter() *Converter {
 	}
 }
 
+// stringToDecimal converts a string to Decimal
+// Returns ZeroDecimal if the string is empty or invalid
+func (c *Converter) stringToDecimal(s string) commontypes.Decimal {
+	if s == "" {
+		return commontypes.ZeroDecimal
+	}
+	d, err := commontypes.NewDecimal(s)
+	if err != nil {
+		// If parsing fails, return zero (for robustness)
+		return commontypes.ZeroDecimal
+	}
+	return d
+}
+
 // ConvertOrder converts OKEx order to common Order type
 func (c *Converter) ConvertOrder(okexOrder *trade.Order) *commontypes.Order {
 	if okexOrder == nil {
@@ -41,11 +55,11 @@ func (c *Converter) ConvertOrder(okexOrder *trade.Order) *commontypes.Order {
 		Side:              string(okexOrder.Side),
 		Type:              string(okexOrder.OrdType),
 		Status:            string(okexOrder.State),
-		Price:             commontypes.Decimal(strconv.FormatFloat(price, 'f', -1, 64)),
-		Quantity:          commontypes.Decimal(strconv.FormatFloat(quantity, 'f', -1, 64)),
-		FilledQuantity:    commontypes.Decimal(strconv.FormatFloat(filledQty, 'f', -1, 64)),
-		RemainingQuantity: commontypes.Decimal(strconv.FormatFloat(quantity-filledQty, 'f', -1, 64)),
-		Fee:               commontypes.Decimal(strconv.FormatFloat(fee, 'f', -1, 64)),
+		Price:             c.stringToDecimal(strconv.FormatFloat(price, 'f', -1, 64)),
+		Quantity:          c.stringToDecimal(strconv.FormatFloat(quantity, 'f', -1, 64)),
+		FilledQuantity:    c.stringToDecimal(strconv.FormatFloat(filledQty, 'f', -1, 64)),
+		RemainingQuantity: c.stringToDecimal(strconv.FormatFloat(quantity-filledQty, 'f', -1, 64)),
+		Fee:               c.stringToDecimal(strconv.FormatFloat(fee, 'f', -1, 64)),
 		FeeCurrency:       okexOrder.FeeCcy,
 		CreatedAt:         commontypes.Timestamp(okexOrder.CTime),
 		UpdatedAt:         commontypes.Timestamp(time.Time(okexOrder.UTime)),
@@ -68,9 +82,9 @@ func (c *Converter) ConvertBalance(okexBalance *account.Balance) *commontypes.Ac
 	for _, detail := range okexBalance.Details {
 		balances = append(balances, &commontypes.Balance{
 			Currency:  detail.Ccy,
-			Available: commontypes.Decimal(strconv.FormatFloat(float64(detail.AvailBal), 'f', -1, 64)),
-			Frozen:    commontypes.Decimal(strconv.FormatFloat(float64(detail.FrozenBal), 'f', -1, 64)),
-			Total:     commontypes.Decimal(strconv.FormatFloat(float64(detail.Eq), 'f', -1, 64)),
+			Available: c.stringToDecimal(strconv.FormatFloat(float64(detail.AvailBal), 'f', -1, 64)),
+			Frozen:    c.stringToDecimal(strconv.FormatFloat(float64(detail.FrozenBal), 'f', -1, 64)),
+			Total:     c.stringToDecimal(strconv.FormatFloat(float64(detail.Eq), 'f', -1, 64)),
 			Extra: map[string]interface{}{
 				"cashBal":   detail.CashBal,
 				"upl":       detail.Upl,
@@ -86,7 +100,7 @@ func (c *Converter) ConvertBalance(okexBalance *account.Balance) *commontypes.Ac
 
 	return &commontypes.AccountBalance{
 		Balances:    balances,
-		TotalEquity: commontypes.Decimal(strconv.FormatFloat(float64(okexBalance.TotalEq), 'f', -1, 64)),
+		TotalEquity: c.stringToDecimal(strconv.FormatFloat(float64(okexBalance.TotalEq), 'f', -1, 64)),
 		UpdatedAt:   commontypes.Timestamp(okexBalance.UTime),
 		Extra: map[string]interface{}{
 			"isoEq":    okexBalance.IsoEq,
@@ -107,17 +121,17 @@ func (c *Converter) ConvertPosition(okexPos *account.Position) *commontypes.Posi
 
 	return &commontypes.Position{
 		Symbol:           okexPos.InstID,
-		Side:             string(okexPos.PosSide),
-		Quantity:         commontypes.Decimal(strconv.FormatFloat(float64(okexPos.Pos), 'f', -1, 64)),
-		AvgPrice:         commontypes.Decimal(strconv.FormatFloat(float64(okexPos.AvgPx), 'f', -1, 64)),
-		MarkPrice:        commontypes.Decimal(strconv.FormatFloat(float64(okexPos.Last), 'f', -1, 64)), // Using Last as mark price
-		LiquidationPrice: commontypes.Decimal(strconv.FormatFloat(float64(okexPos.LiqPx), 'f', -1, 64)),
-		UnrealizedPnL:    commontypes.Decimal(strconv.FormatFloat(float64(okexPos.Upl), 'f', -1, 64)),
-		RealizedPnL:      commontypes.Decimal(strconv.FormatFloat(float64(okexPos.RealizedPnl), 'f', -1, 64)),
-		Leverage:         commontypes.Decimal(strconv.FormatFloat(float64(okexPos.Lever), 'f', -1, 64)),
-		MarginMode:       string(okexPos.MgnMode),
-		CreatedAt:        commontypes.Timestamp(time.Time(okexPos.CTime)),
-		UpdatedAt:        commontypes.Timestamp(time.Time(okexPos.UTime)),
+		PosSide:          c.convertPositionSide(okexPos.PosSide),
+		Quantity:         c.stringToDecimal(strconv.FormatFloat(float64(okexPos.Pos), 'f', -1, 64)),
+		AvgPrice:         c.stringToDecimal(strconv.FormatFloat(float64(okexPos.AvgPx), 'f', -1, 64)),
+		MarkPrice:        c.stringToDecimal(strconv.FormatFloat(float64(okexPos.Last), 'f', -1, 64)), // Using Last as mark price
+		LiquidationPrice: c.stringToDecimal(strconv.FormatFloat(float64(okexPos.LiqPx), 'f', -1, 64)),
+		UnrealizedPnL:    c.stringToDecimal(strconv.FormatFloat(float64(okexPos.Upl), 'f', -1, 64)),
+		RealizedPnL:      c.stringToDecimal(strconv.FormatFloat(float64(okexPos.RealizedPnl), 'f', -1, 64)),
+		Leverage:         okexPos.Lever,
+		MarginMode:       c.convertMarginMode(okexPos.MgnMode),
+		CreatedAt:        commontypes.Timestamp(okexPos.CTime),
+		UpdatedAt:        commontypes.Timestamp(okexPos.UTime),
 		Extra: map[string]interface{}{
 			"posID":       okexPos.PosID,
 			"tradeID":     okexPos.TradeID,
@@ -214,9 +228,9 @@ func (c *Converter) ConvertBalanceAndPosition(okexBNP *account.BalanceAndPositio
 		cashBal := float64(bal.CashBal)
 		balances = append(balances, &commontypes.Balance{
 			Currency:  bal.Ccy,
-			Available: commontypes.Decimal(strconv.FormatFloat(cashBal, 'f', -1, 64)),
-			Frozen:    commontypes.Decimal("0"), // BalData doesn't have frozen field
-			Total:     commontypes.Decimal(strconv.FormatFloat(cashBal, 'f', -1, 64)),
+			Available: c.stringToDecimal(strconv.FormatFloat(cashBal, 'f', -1, 64)),
+			Frozen:    commontypes.MustDecimal("0"), // BalData doesn't have frozen field
+			Total:     c.stringToDecimal(strconv.FormatFloat(cashBal, 'f', -1, 64)),
 			Extra: map[string]interface{}{
 				"uTime": bal.UTime,
 			},
@@ -228,14 +242,14 @@ func (c *Converter) ConvertBalanceAndPosition(okexBNP *account.BalanceAndPositio
 	for _, pos := range okexBNP.PosData {
 		positions = append(positions, &commontypes.Position{
 			Symbol:        pos.InstId,
-			Side:          string(pos.PosSide),
-			Quantity:      commontypes.Decimal(strconv.FormatFloat(float64(pos.Pos), 'f', -1, 64)),
-			AvgPrice:      commontypes.Decimal(strconv.FormatFloat(float64(pos.AvgPx), 'f', -1, 64)),
-			MarkPrice:     commontypes.Decimal("0"), // PosData doesn't have mark price
-			UnrealizedPnL: commontypes.Decimal("0"), // PosData doesn't have unrealized PnL
-			RealizedPnL:   commontypes.Decimal(strconv.FormatFloat(float64(pos.SettledPnl), 'f', -1, 64)),
-			Leverage:      commontypes.Decimal("0"), // PosData doesn't have leverage
-			MarginMode:    string(pos.MgnMode),
+			PosSide:       c.convertPositionSide(pos.PosSide),
+			Quantity:      c.stringToDecimal(strconv.FormatFloat(float64(pos.Pos), 'f', -1, 64)),
+			AvgPrice:      c.stringToDecimal(strconv.FormatFloat(float64(pos.AvgPx), 'f', -1, 64)),
+			MarkPrice:     commontypes.MustDecimal("0"), // PosData doesn't have mark price
+			UnrealizedPnL: commontypes.MustDecimal("0"), // PosData doesn't have unrealized PnL
+			RealizedPnL:   c.stringToDecimal(strconv.FormatFloat(float64(pos.SettledPnl), 'f', -1, 64)),
+			Leverage:      commontypes.MustDecimal("0"), // PosData doesn't have leverage
+			MarginMode:    c.convertMarginMode(pos.MgnMode),
 			UpdatedAt:     commontypes.Timestamp(time.Time(pos.UTime)),
 			Extra: map[string]interface{}{
 				"posId":          pos.PosId,
@@ -273,9 +287,9 @@ func (c *Converter) ConvertAccountEvent(okexBalances []*account.Balance, eventTy
 		for _, detail := range okexBal.Details {
 			balances = append(balances, &commontypes.Balance{
 				Currency:  detail.Ccy,
-				Available: commontypes.Decimal(strconv.FormatFloat(float64(detail.AvailBal), 'f', -1, 64)),
-				Frozen:    commontypes.Decimal(strconv.FormatFloat(float64(detail.FrozenBal), 'f', -1, 64)),
-				Total:     commontypes.Decimal(strconv.FormatFloat(float64(detail.Eq), 'f', -1, 64)),
+				Available: c.stringToDecimal(strconv.FormatFloat(float64(detail.AvailBal), 'f', -1, 64)),
+				Frozen:    c.stringToDecimal(strconv.FormatFloat(float64(detail.FrozenBal), 'f', -1, 64)),
+				Total:     c.stringToDecimal(strconv.FormatFloat(float64(detail.Eq), 'f', -1, 64)),
 				Extra: map[string]interface{}{
 					"cashBal":   detail.CashBal,
 					"upl":       detail.Upl,
@@ -291,7 +305,7 @@ func (c *Converter) ConvertAccountEvent(okexBalances []*account.Balance, eventTy
 		Balances:    balances,
 		EventType:   eventType,
 		UpdatedAt:   commontypes.Timestamp(updateTime),
-		TotalEquity: commontypes.Decimal(strconv.FormatFloat(totalEquity, 'f', -1, 64)),
+		TotalEquity: c.stringToDecimal(strconv.FormatFloat(totalEquity, 'f', -1, 64)),
 		Extra:       map[string]interface{}{},
 	}
 }
@@ -352,15 +366,15 @@ func (c *Converter) ConvertInstrument(okexInst *publicdata.Instrument, ticker ma
 			Symbol:            okexInst.InstID,
 			BaseCurrency:      okexInst.CtValCcy,
 			QuoteCurrency:     okexInst.SettleCcy,
-			CtVal:             commontypes.Decimal(strconv.FormatFloat(float64(okexInst.CtVal), 'f', -1, 64)),
+			CtVal:             c.stringToDecimal(strconv.FormatFloat(float64(okexInst.CtVal), 'f', -1, 64)),
 			InstrumentType:    commontypes.InstrumentSwap,
 			Status:            string(okexInst.State),
-			MinOrderSize:      commontypes.Decimal(strconv.FormatFloat(float64(okexInst.MinSz), 'f', -1, 64)),
-			MaxOrderSize:      "0",
-			PricePrecision:    commontypes.Decimal(strconv.FormatFloat(float64(okexInst.TickSz), 'f', -1, 64)),
-			QuantityPrecision: commontypes.Decimal(strconv.FormatFloat(float64(okexInst.LotSz), 'f', -1, 64)),
+			MinOrderSize:      c.stringToDecimal(strconv.FormatFloat(float64(okexInst.MinSz), 'f', -1, 64)),
+			MaxOrderSize:      commontypes.ZeroDecimal,
+			PricePrecision:    c.stringToDecimal(strconv.FormatFloat(float64(okexInst.TickSz), 'f', -1, 64)),
+			QuantityPrecision: c.stringToDecimal(strconv.FormatFloat(float64(okexInst.LotSz), 'f', -1, 64)),
 			MaxLever:          int(okexInst.Lever),
-			LastPrice:         commontypes.Decimal(strconv.FormatFloat(float64(ticker.Last), 'f', -1, 64)),
+			LastPrice:         c.stringToDecimal(strconv.FormatFloat(float64(ticker.Last), 'f', -1, 64)),
 		}
 	}
 
@@ -368,15 +382,15 @@ func (c *Converter) ConvertInstrument(okexInst *publicdata.Instrument, ticker ma
 		Symbol:            okexInst.InstID,
 		BaseCurrency:      okexInst.BaseCcy,
 		QuoteCurrency:     okexInst.QuoteCcy,
-		CtVal:             commontypes.Decimal(strconv.FormatFloat(float64(okexInst.CtVal), 'f', -1, 64)),
+		CtVal:             c.stringToDecimal(strconv.FormatFloat(float64(okexInst.CtVal), 'f', -1, 64)),
 		InstrumentType:    instType,
 		Status:            string(okexInst.State),
-		MinOrderSize:      commontypes.Decimal(strconv.FormatFloat(float64(okexInst.MinSz), 'f', -1, 64)),
-		MaxOrderSize:      "0",
-		PricePrecision:    commontypes.Decimal(strconv.FormatFloat(float64(okexInst.TickSz), 'f', -1, 64)),
-		QuantityPrecision: commontypes.Decimal(strconv.FormatFloat(float64(okexInst.LotSz), 'f', -1, 64)),
+		MinOrderSize:      c.stringToDecimal(strconv.FormatFloat(float64(okexInst.MinSz), 'f', -1, 64)),
+		MaxOrderSize:      commontypes.ZeroDecimal,
+		PricePrecision:    c.stringToDecimal(strconv.FormatFloat(float64(okexInst.TickSz), 'f', -1, 64)),
+		QuantityPrecision: c.stringToDecimal(strconv.FormatFloat(float64(okexInst.LotSz), 'f', -1, 64)),
 		MaxLever:          int(okexInst.Lever),
-		LastPrice:         commontypes.Decimal(strconv.FormatFloat(float64(ticker.Last), 'f', -1, 64)),
+		LastPrice:         c.stringToDecimal(strconv.FormatFloat(float64(ticker.Last), 'f', -1, 64)),
 	}
 }
 
@@ -388,12 +402,12 @@ func (c *Converter) ConvertTicker(okexTicker *market.Ticker) *commontypes.Ticker
 
 	return &commontypes.Ticker{
 		Symbol:    okexTicker.InstID,
-		LastPrice: commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.Last), 'f', -1, 64)),
-		BidPrice:  commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.BidPx), 'f', -1, 64)),
-		AskPrice:  commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.AskPx), 'f', -1, 64)),
-		High24h:   commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.High24h), 'f', -1, 64)),
-		Low24h:    commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.Low24h), 'f', -1, 64)),
-		Volume24h: commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.Vol24h), 'f', -1, 64)),
+		LastPrice: c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.Last), 'f', -1, 64)),
+		BidPrice:  c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.BidPx), 'f', -1, 64)),
+		AskPrice:  c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.AskPx), 'f', -1, 64)),
+		High24h:   c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.High24h), 'f', -1, 64)),
+		Low24h:    c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.Low24h), 'f', -1, 64)),
+		Volume24h: c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.Vol24h), 'f', -1, 64)),
 		Timestamp: commontypes.Timestamp(okexTicker.TS),
 		Extra: map[string]interface{}{
 			"open24h":   okexTicker.Open24h,
@@ -420,18 +434,18 @@ func (c *Converter) ConvertTickerToUpdate(okexTicker *market.Ticker) *commontype
 
 	return &commontypes.TickerUpdate{
 		Symbol:           okexTicker.InstID,
-		LastPrice:        commontypes.Decimal(strconv.FormatFloat(last, 'f', -1, 64)),
-		BidPrice:         commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.BidPx), 'f', -1, 64)),
-		BidSize:          commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.BidSz), 'f', -1, 64)),
-		AskPrice:         commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.AskPx), 'f', -1, 64)),
-		AskSize:          commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.AskSz), 'f', -1, 64)),
-		High24h:          commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.High24h), 'f', -1, 64)),
-		Low24h:           commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.Low24h), 'f', -1, 64)),
-		Open24h:          commontypes.Decimal(strconv.FormatFloat(open24h, 'f', -1, 64)),
-		Volume24h:        commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.Vol24h), 'f', -1, 64)),
-		QuoteVolume24h:   commontypes.Decimal(strconv.FormatFloat(float64(okexTicker.VolCcy24h), 'f', -1, 64)),
-		PriceChange24h:   commontypes.Decimal(strconv.FormatFloat(priceChange, 'f', -1, 64)),
-		PercentChange24h: commontypes.Decimal(strconv.FormatFloat(percentChange, 'f', -1, 64)),
+		LastPrice:        c.stringToDecimal(strconv.FormatFloat(last, 'f', -1, 64)),
+		BidPrice:         c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.BidPx), 'f', -1, 64)),
+		BidSize:          c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.BidSz), 'f', -1, 64)),
+		AskPrice:         c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.AskPx), 'f', -1, 64)),
+		AskSize:          c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.AskSz), 'f', -1, 64)),
+		High24h:          c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.High24h), 'f', -1, 64)),
+		Low24h:           c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.Low24h), 'f', -1, 64)),
+		Open24h:          c.stringToDecimal(strconv.FormatFloat(open24h, 'f', -1, 64)),
+		Volume24h:        c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.Vol24h), 'f', -1, 64)),
+		QuoteVolume24h:   c.stringToDecimal(strconv.FormatFloat(float64(okexTicker.VolCcy24h), 'f', -1, 64)),
+		PriceChange24h:   c.stringToDecimal(strconv.FormatFloat(priceChange, 'f', -1, 64)),
+		PercentChange24h: c.stringToDecimal(strconv.FormatFloat(percentChange, 'f', -1, 64)),
 		Timestamp:        commontypes.Timestamp(okexTicker.TS),
 		Extra: map[string]interface{}{
 			"lastSz":   okexTicker.LastSz,
@@ -451,12 +465,12 @@ func (c *Converter) ConvertCandleToUpdate(symbol, interval string, okexCandle *m
 	return &commontypes.CandleUpdate{
 		Symbol:      symbol,
 		Interval:    interval,
-		Open:        commontypes.Decimal(strconv.FormatFloat(okexCandle.O, 'f', -1, 64)),
-		High:        commontypes.Decimal(strconv.FormatFloat(okexCandle.H, 'f', -1, 64)),
-		Low:         commontypes.Decimal(strconv.FormatFloat(okexCandle.L, 'f', -1, 64)),
-		Close:       commontypes.Decimal(strconv.FormatFloat(okexCandle.C, 'f', -1, 64)),
-		Volume:      commontypes.Decimal(strconv.FormatFloat(okexCandle.Vol, 'f', -1, 64)),
-		QuoteVolume: commontypes.Decimal(strconv.FormatFloat(okexCandle.VolCcy, 'f', -1, 64)),
+		Open:        c.stringToDecimal(strconv.FormatFloat(okexCandle.O, 'f', -1, 64)),
+		High:        c.stringToDecimal(strconv.FormatFloat(okexCandle.H, 'f', -1, 64)),
+		Low:         c.stringToDecimal(strconv.FormatFloat(okexCandle.L, 'f', -1, 64)),
+		Close:       c.stringToDecimal(strconv.FormatFloat(okexCandle.C, 'f', -1, 64)),
+		Volume:      c.stringToDecimal(strconv.FormatFloat(okexCandle.Vol, 'f', -1, 64)),
+		QuoteVolume: c.stringToDecimal(strconv.FormatFloat(okexCandle.VolCcy, 'f', -1, 64)),
 		Timestamp:   commontypes.Timestamp(okexCandle.TS),
 		Confirmed:   okexCandle.Confirm,
 		Extra: map[string]interface{}{
@@ -474,16 +488,68 @@ func (c *Converter) ConvertCandle(okexCandle *market.Candle, symbol, interval st
 	return &commontypes.Candle{
 		Symbol:      symbol,
 		Interval:    interval,
-		Open:        commontypes.Decimal(strconv.FormatFloat(okexCandle.O, 'f', -1, 64)),
-		High:        commontypes.Decimal(strconv.FormatFloat(okexCandle.H, 'f', -1, 64)),
-		Low:         commontypes.Decimal(strconv.FormatFloat(okexCandle.L, 'f', -1, 64)),
-		Close:       commontypes.Decimal(strconv.FormatFloat(okexCandle.C, 'f', -1, 64)),
-		Volume:      commontypes.Decimal(strconv.FormatFloat(okexCandle.Vol, 'f', -1, 64)),
-		QuoteVolume: commontypes.Decimal(strconv.FormatFloat(okexCandle.VolCcy, 'f', -1, 64)),
+		Open:        c.stringToDecimal(strconv.FormatFloat(okexCandle.O, 'f', -1, 64)),
+		High:        c.stringToDecimal(strconv.FormatFloat(okexCandle.H, 'f', -1, 64)),
+		Low:         c.stringToDecimal(strconv.FormatFloat(okexCandle.L, 'f', -1, 64)),
+		Close:       c.stringToDecimal(strconv.FormatFloat(okexCandle.C, 'f', -1, 64)),
+		Volume:      c.stringToDecimal(strconv.FormatFloat(okexCandle.Vol, 'f', -1, 64)),
+		QuoteVolume: c.stringToDecimal(strconv.FormatFloat(okexCandle.VolCcy, 'f', -1, 64)),
 		Timestamp:   commontypes.Timestamp(okexCandle.TS),
 		Confirmed:   okexCandle.Confirm,
 		Extra: map[string]interface{}{
 			"volCcyQuote": okexCandle.VolCcyQuote,
 		},
+	}
+}
+
+// convertPositionSide converts OKEx position side to common PositionSide
+func (c *Converter) convertPositionSide(okexPosSide okexconstants.PositionSide) commontypes.PositionSide {
+	switch okexPosSide {
+	case okexconstants.PositionLongSide:
+		return commontypes.PositionSideLong
+	case okexconstants.PositionShortSide:
+		return commontypes.PositionSideShort
+	case okexconstants.PositionNetSide:
+		return commontypes.PositionSideNet
+	default:
+		return commontypes.PositionSideNet
+	}
+}
+
+// convertMarginMode converts OKEx margin mode to common MarginMode
+func (c *Converter) convertMarginMode(okexMarginMode okexconstants.MarginMode) commontypes.MarginMode {
+	switch okexMarginMode {
+	case okexconstants.MarginCrossMode:
+		return commontypes.MarginModeCross
+	case okexconstants.MarginIsolatedMode:
+		return commontypes.MarginModeIsolated
+	default:
+		return commontypes.MarginModeCross
+	}
+}
+
+// toOKExPositionSide converts common PositionSide to OKEx position side
+func (c *Converter) toOKExPositionSide(posSide commontypes.PositionSide) okexconstants.PositionSide {
+	switch posSide {
+	case commontypes.PositionSideLong:
+		return okexconstants.PositionLongSide
+	case commontypes.PositionSideShort:
+		return okexconstants.PositionShortSide
+	case commontypes.PositionSideNet:
+		return okexconstants.PositionNetSide
+	default:
+		return okexconstants.PositionNetSide
+	}
+}
+
+// toOKExMarginMode converts common MarginMode to OKEx margin mode
+func (c *Converter) toOKExMarginMode(marginMode commontypes.MarginMode) okexconstants.MarginMode {
+	switch marginMode {
+	case commontypes.MarginModeCross:
+		return okexconstants.MarginCrossMode
+	case commontypes.MarginModeIsolated:
+		return okexconstants.MarginIsolatedMode
+	default:
+		return okexconstants.MarginCrossMode
 	}
 }

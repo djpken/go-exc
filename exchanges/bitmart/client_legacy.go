@@ -24,10 +24,6 @@ type Client struct {
 func NewClient(ctx context.Context, apiKey, secretKey, memo string, testMode bool) (*Client, error) {
 	config := NewDefaultConfig(apiKey, secretKey, memo, testMode)
 
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-
 	// Create REST client config
 	restConfig := &rest.BitMartConfig{
 		APIKey:    apiKey,

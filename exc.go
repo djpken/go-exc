@@ -18,6 +18,26 @@ type (
 	Instrument    = types.Instrument
 	Candle        = types.Candle
 
+	// Primitive types
+	Decimal   = types.Decimal
+	Timestamp = types.Timestamp
+)
+
+// Import common functions from types package
+var (
+	NewDecimal          = types.NewDecimal
+	NewDecimalFromFloat = types.NewDecimalFromFloat
+	NewDecimalFromInt   = types.NewDecimalFromInt
+	MustDecimal         = types.MustDecimal
+)
+
+// Re-export type aliases for convenience
+type (
+	// Enum types
+	PositionSide   = types.PositionSide
+	MarginMode     = types.MarginMode
+	InstrumentType = types.InstrumentType
+
 	// Request types
 	PlaceOrderRequest     = types.PlaceOrderRequest
 	CancelOrderRequest    = types.CancelOrderRequest
@@ -45,6 +65,29 @@ type (
 	WebSocketSuccess          = types.WebSocketSuccess
 	WebSocketSystemMessage    = types.WebSocketSystemMessage
 	WebSocketSystemError      = types.WebSocketSystemError
+)
+
+// ZeroDecimal represents a zero value for Decimal type
+var ZeroDecimal = types.ZeroDecimal
+
+// Common constants
+const (
+	// Position side constants
+	PositionSideLong  = types.PositionSideLong
+	PositionSideShort = types.PositionSideShort
+	PositionSideNet   = types.PositionSideNet
+
+	// Margin mode constants
+	MarginModeCross    = types.MarginModeCross
+	MarginModeIsolated = types.MarginModeIsolated
+
+	// Instrument type constants
+	InstrumentAny     = types.InstrumentAny
+	InstrumentSpot    = types.InstrumentSpot
+	InstrumentMargin  = types.InstrumentMargin
+	InstrumentFutures = types.InstrumentFutures
+	InstrumentSwap    = types.InstrumentSwap
+	InstrumentOption  = types.InstrumentOption
 )
 
 // Exchange represents a cryptocurrency exchange with a unified API interface.
@@ -110,7 +153,7 @@ type Exchange interface {
 	// GetBalance gets account balance information
 	// currencies: Optional list of currencies to query (empty = all currencies)
 	// Returns: AccountBalance with balances for each currency
-	GetBalance(ctx context.Context, currencies ...string) (*Balance, error)
+	GetBalance(ctx context.Context, typee string, currencies ...string) (*Balance, error)
 
 	// GetPositions gets current open positions (for futures/margin trading)
 	// symbols: Optional list of symbols to query (empty = all positions)
@@ -142,10 +185,10 @@ type Exchange interface {
 	// Returns: Error if cancellation failed
 	CancelOrder(ctx context.Context, req CancelOrderRequest) error
 
-	// GetOrder gets details of a specific order
+	// GetOrderDetail gets details of a specific order
 	// req: GetOrderRequest with symbol and order ID
 	// Returns: Order object with current status, filled quantity, etc.
-	GetOrder(ctx context.Context, req GetOrderRequest) (*Order, error)
+	GetOrderDetail(ctx context.Context, req GetOrderRequest) (*Order, error)
 
 	// --- WebSocket Subscriptions ---
 
@@ -210,19 +253,6 @@ type Exchange interface {
 	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
 	UnsubscribePosition(req WebSocketSubscribeRequest) error
 
-	// SubscribeOrders subscribes to order updates via WebSocket
-	// ch: Channel to receive OrderUpdate events
-	// req: WebSocketSubscribeRequest with subscription parameters
-	// Returns: Error if subscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
-	SubscribeOrders(ch chan *OrderUpdate, req WebSocketSubscribeRequest) error
-
-	// UnsubscribeOrders unsubscribes from order updates
-	// req: WebSocketSubscribeRequest with subscription parameters
-	// Returns: Error if unsubscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
-	UnsubscribeOrders(req WebSocketSubscribeRequest) error
-
 	// SetChannels sets channels for receiving WebSocket events
 	// errCh: Channel to receive error events
 	// subCh: Channel to receive subscription events
@@ -242,90 +272,3 @@ type Exchange interface {
 		systemErrCh chan *WebSocketSystemError,
 	) error
 }
-
-// RESTClient provides access to REST API endpoints
-type RESTClient interface {
-	// Trade returns the trading API
-	Trade() TradeAPI
-
-	// Account returns the account API
-	Account() AccountAPI
-
-	// Market returns the market data API
-	Market() MarketAPI
-
-	// Funding returns the funding API
-	Funding() FundingAPI
-}
-
-// WebSocketClient provides access to WebSocket API
-type WebSocketClient interface {
-	// Connect establishes the WebSocket connection
-	Connect() error
-
-	// Close closes the WebSocket connection
-	Close() error
-
-	// Subscribe subscribes to a channel
-	Subscribe(channel ChannelType, params SubscribeParams) error
-
-	// SetEventHandler sets the event handler for WebSocket events
-	SetEventHandler(handler EventHandler)
-}
-
-// TradeAPI provides trading operations
-type TradeAPI interface {
-	// PlaceOrder places a new order
-	PlaceOrder(ctx context.Context, req PlaceOrderRequest) (*Order, error)
-
-	// CancelOrder cancels an existing order
-	CancelOrder(ctx context.Context, req CancelOrderRequest) error
-
-	// GetOrder gets order details
-	GetOrder(ctx context.Context, req GetOrderRequest) (*Order, error)
-}
-
-// AccountAPI provides account operations
-type AccountAPI interface {
-	// GetBalance gets account balance
-	GetBalance(ctx context.Context) (*Balance, error)
-
-	// GetPositions gets account positions
-	GetPositions(ctx context.Context) ([]*Position, error)
-}
-
-// MarketAPI provides market data operations
-type MarketAPI interface {
-	// GetTicker gets ticker information
-	GetTicker(ctx context.Context, symbol string) (*Ticker, error)
-
-	// GetOrderBook gets order book
-	GetOrderBook(ctx context.Context, symbol string, depth int) (*OrderBook, error)
-}
-
-// FundingAPI provides funding operations
-type FundingAPI interface {
-	// GetDepositAddress gets deposit address
-	GetDepositAddress(ctx context.Context, currency string) (string, error)
-
-	// Withdraw initiates a withdrawal
-	Withdraw(ctx context.Context, req WithdrawRequest) (string, error)
-}
-
-// ChannelType represents a WebSocket channel type
-type ChannelType string
-
-// Common channel types
-const (
-	ChannelTicker    ChannelType = "ticker"
-	ChannelOrderBook ChannelType = "orderbook"
-	ChannelTrades    ChannelType = "trades"
-	ChannelOrders    ChannelType = "orders"
-	ChannelPositions ChannelType = "positions"
-)
-
-// SubscribeParams contains parameters for subscribing to a channel
-type SubscribeParams map[string]interface{}
-
-// EventHandler handles WebSocket events
-type EventHandler func(event interface{})

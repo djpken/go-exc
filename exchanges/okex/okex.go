@@ -119,7 +119,7 @@ func (e *OKExExchange) GetCandles(ctx context.Context, req commontypes.GetCandle
 }
 
 // GetBalance gets account balance
-func (e *OKExExchange) GetBalance(ctx context.Context, currencies ...string) (*commontypes.AccountBalance, error) {
+func (e *OKExExchange) GetBalance(ctx context.Context, typee string, currencies ...string) (*commontypes.AccountBalance, error) {
 	return e.restAPI.Account().GetBalance(ctx, currencies...)
 }
 
@@ -140,15 +140,7 @@ func (e *OKExExchange) SetLeverage(ctx context.Context, req commontypes.SetLever
 
 // PlaceOrder places a new order
 func (e *OKExExchange) PlaceOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.Order, error) {
-	// Add PosSide to extra parameters if provided
-	extra := req.Extra
-	if extra == nil {
-		extra = make(map[string]interface{})
-	}
-	if req.PosSide != "" {
-		extra["posSide"] = req.PosSide
-	}
-	return e.restAPI.Trade().PlaceOrder(ctx, req.Symbol, req.Side, req.Type, req.Quantity, req.Price, extra)
+	return e.restAPI.Trade().PlaceOrder(ctx, req)
 }
 
 // CancelOrder cancels an existing order
@@ -156,9 +148,9 @@ func (e *OKExExchange) CancelOrder(ctx context.Context, req commontypes.CancelOr
 	return e.restAPI.Trade().CancelOrder(ctx, req.Symbol, req.OrderID, req.Extra)
 }
 
-// GetOrder gets order details
-func (e *OKExExchange) GetOrder(ctx context.Context, req commontypes.GetOrderRequest) (*commontypes.Order, error) {
-	return e.restAPI.Trade().GetOrder(ctx, req.Symbol, req.OrderID, req.Extra)
+// GetOrderDetail gets order details
+func (e *OKExExchange) GetOrderDetail(ctx context.Context, req commontypes.GetOrderRequest) (*commontypes.Order, error) {
+	return e.restAPI.Trade().GetOrderDetail(ctx, req)
 }
 
 // ========== WebSocket Subscription Methods ==========

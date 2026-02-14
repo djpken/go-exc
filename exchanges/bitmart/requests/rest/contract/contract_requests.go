@@ -76,3 +76,70 @@ type SubmitOrderRequest struct {
 	// - 3 = cancel_both
 	StpMode int `json:"stp_mode,omitempty"`
 }
+
+// GetPositionV2Request represents request for getting position details V2
+type GetPositionV2Request struct {
+	// Symbol is the contract trading pair (optional, e.g., BTCUSDT)
+	// If not provided, returns all positions
+	// If provided, returns data even if no position exists
+	Symbol string `json:"symbol,omitempty"`
+
+	// Account is the trading account (optional)
+	// - "futures" = Futures main account (default)
+	// - "copy_trading" = Copy trading sub-account
+	Account string `json:"account,omitempty"`
+}
+
+// SubmitLeverageRequest represents request for setting leverage
+type SubmitLeverageRequest struct {
+	// Symbol is the contract trading pair (e.g., BTCUSDT, ETHUSDT)
+	Symbol string `json:"symbol"`
+
+	// Leverage is the leverage multiplier (e.g., "5", "10", "20")
+	// Optional: If not provided, uses current leverage
+	Leverage string `json:"leverage,omitempty"`
+
+	// OpenType is the margin mode (required)
+	// - "cross" = Cross margin (全仓)
+	// - "isolated" = Isolated margin (逐仓)
+	OpenType string `json:"open_type"`
+}
+
+// GetContractTradesRequest represents request for querying contract trade details
+type GetContractTradesRequest struct {
+	// Symbol is the contract trading pair (optional, e.g., BTCUSDT)
+	Symbol string `url:"symbol,omitempty"`
+
+	// Account is the trading account (optional)
+	// - "futures" = Main futures account
+	// - "copy_trading" = Copy trading sub-account
+	Account string `url:"account,omitempty"`
+
+	// StartTime is the start timestamp in seconds (optional)
+	StartTime int64 `url:"start_time,omitempty"`
+
+	// EndTime is the end timestamp in seconds (optional)
+	EndTime int64 `url:"end_time,omitempty"`
+
+	// OrderID is the order ID to query (optional)
+	OrderID string `url:"order_id,omitempty"`
+
+	// ClientOrderID is the client order ID to query (optional)
+	ClientOrderID string `url:"client_order_id,omitempty"`
+}
+
+// GetContractKlineRequest represents request for getting contract kline/candlestick data
+type GetContractKlineRequest struct {
+	// Symbol is the contract trading pair (required, e.g., BTCUSDT)
+	Symbol string `json:"symbol"`
+
+	// Step is the kline interval in minutes (optional, default 1)
+	// Valid values: 1, 3, 5, 15, 30, 60, 120, 240, 360, 720, 1440, 4320, 10080
+	Step int64 `json:"step,omitempty"`
+
+	// StartTime is the start timestamp in seconds (required)
+	StartTime int64 `json:"start_time"`
+
+	// EndTime is the end timestamp in seconds (required)
+	EndTime int64 `json:"end_time"`
+}

@@ -1,8 +1,6 @@
 package bitmart
 
 import (
-	"errors"
-
 	"github.com/djpken/go-exc/exchanges/bitmart/types"
 )
 
@@ -22,20 +20,8 @@ type Config struct {
 
 	// WSBaseURL is the base URL for WebSocket API
 	WSBaseURL string
-}
 
-// Validate validates the configuration
-func (c *Config) Validate() error {
-	if c.APIKey == "" {
-		return errors.New("APIKey is required")
-	}
-	if c.SecretKey == "" {
-		return errors.New("SecretKey is required")
-	}
-	if c.Memo == "" {
-		return errors.New("Memo is required")
-	}
-	return nil
+	WSUserURL string
 }
 
 // GetBaseURL returns the base URL for REST API
@@ -51,14 +37,19 @@ func (c *Config) GetWSBaseURL() string {
 // NewDefaultConfig creates a new default configuration
 func NewDefaultConfig(apiKey, secretKey, memo string, testMode bool) *Config {
 	baseURL := string(types.ProductionSwapServer)
+	wsURL := string(types.ProductionAPIWSServer)
+	swUserURL := string(types.ProductionUserWSServer)
 	if testMode {
 		baseURL = string(types.DemoSwapServer)
+		wsURL = string(types.DemoAPIWSServer)
+		swUserURL = string(types.DemoUserWSServer)
 	}
 	return &Config{
 		APIKey:    apiKey,
 		SecretKey: secretKey,
 		Memo:      memo,
 		BaseURL:   baseURL,
-		WSBaseURL: string(types.ProductionAPIWSServer),
+		WSBaseURL: wsURL,
+		WSUserURL: swUserURL,
 	}
 }

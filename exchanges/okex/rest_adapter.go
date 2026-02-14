@@ -78,31 +78,29 @@ type TradeAPIAdapter struct {
 }
 
 // PlaceOrder places a new order
-func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, symbol, side, orderType string, quantity, price float64, extra map[string]interface{}) (*commontypes.Order, error) {
+func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, placeOrderRequest commontypes.PlaceOrderRequest) (*commontypes.Order, error) {
+	extra := placeOrderRequest.Extra
+	if extra == nil {
+		extra = make(map[string]interface{})
+	}
 	// Build OKEx order request
 	req := tradereq.PlaceOrder{
-		InstID:  symbol,
-		TdMode:  okexconstants.TradeCashMode, // Default to cash mode
-		Side:    a.converter.ConvertOrderSide(side),
-		OrdType: a.converter.ConvertOrderType(orderType),
-		Sz:      quantity,
+		InstID:  placeOrderRequest.Symbol,
+		TdMode:  okexconstants.TradeMode(placeOrderRequest.TdMode),
+		Side:    okexconstants.OrderSide(placeOrderRequest.Side),
+		PosSide: okexconstants.PositionSide(placeOrderRequest.PosSide),
+		OrdType: okexconstants.OrderType(placeOrderRequest.Type),
+		Sz:      placeOrderRequest.Quantity,
+		ClOrdID: placeOrderRequest.ClientOrderID,
 	}
 
+	price := placeOrderRequest.Price
 	if price > 0 {
 		req.Px = price
 	}
 
 	// Apply extra parameters
 	if extra != nil {
-		if tdMode, ok := extra["tdMode"].(string); ok {
-			req.TdMode = okexconstants.TradeMode(tdMode)
-		}
-		if posSide, ok := extra["posSide"].(string); ok {
-			req.PosSide = okexconstants.PositionSide(posSide)
-		}
-		if clOrdID, ok := extra["clOrdID"].(string); ok {
-			req.ClOrdID = clOrdID
-		}
 		if tag, ok := extra["tag"].(string); ok {
 			req.Tag = tag
 		}
@@ -130,13 +128,14 @@ func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, symbol, side, orderTyp
 
 	// Convert to common order type
 	// Note: PlaceOrder response doesn't include full order details
-	// You may need to call GetOrder to get complete information
+	// You may need to call GetOrderDetail to get complete information
 	ordID := strconv.FormatFloat(float64(resp.PlaceOrders[0].OrdID), 'f', 0, 64)
 	return &commontypes.Order{
-		ID:     ordID,
-		Symbol: symbol,
-		Side:   side,
-		Type:   orderType,
+		ID:            ordID,
+		Symbol:        placeOrderRequest.Symbol,
+		Side:          string(placeOrderRequest.Side),
+		Type:          placeOrderRequest.Type,
+		ClientOrderID: placeOrderRequest.ClientOrderID,
 		Extra: map[string]interface{}{
 			"clOrdID": resp.PlaceOrders[0].ClOrdID,
 			"sCode":   resp.PlaceOrders[0].SCode,
@@ -179,17 +178,12 @@ func (a *TradeAPIAdapter) CancelOrder(ctx context.Context, symbol, orderId strin
 	return nil
 }
 
-// GetOrder gets order details
-func (a *TradeAPIAdapter) GetOrder(ctx context.Context, symbol, orderId string, extra map[string]interface{}) (*commontypes.Order, error) {
+// GetOrderDetail gets order details
+func (a *TradeAPIAdapter) GetOrderDetail(ctx context.Context, commonReq commontypes.GetOrderRequest) (*commontypes.Order, error) {
 	req := tradereq.OrderDetails{
-		InstID: symbol,
-		OrdID:  orderId,
-	}
-
-	if extra != nil {
-		if clOrdID, ok := extra["clOrdID"].(string); ok {
-			req.ClOrdID = clOrdID
-		}
+		InstID:  commonReq.Symbol,
+		OrdID:   commonReq.OrderID,
+		ClOrdID: commonReq.ClientOrderID,
 	}
 
 	resp, err := a.client.Trade.GetOrderDetail(req)
@@ -203,7 +197,7 @@ func (a *TradeAPIAdapter) GetOrder(ctx context.Context, symbol, orderId string, 
 	}
 
 	if len(resp.Orders) == 0 {
-		return nil, fmt.Errorf("order not found: symbol=%s, orderId=%s", symbol, orderId)
+		return nil, fmt.Errorf("order not found: symbol=%s, orderId=%s", commonReq.Symbol, commonReq.OrderID)
 	}
 
 	return a.converter.ConvertOrder(resp.Orders[0]), nil
@@ -285,11 +279,11 @@ func (a *AccountAPIAdapter) GetLeverage(ctx context.Context, req commontypes.Get
 	leverages := make([]*commontypes.Leverage, 0, len(resp.Leverages))
 	for _, lev := range resp.Leverages {
 		leverages = append(leverages, &commontypes.Leverage{
-			Symbol:       lev.InstID,
-			Leverage:     int(lev.Lever),
-			MarginMode:   string(lev.MgnMode),
-			PositionSide: string(lev.PosSide),
-			Extra:        map[string]interface{}{},
+			Symbol:     lev.InstID,
+			Leverage:   int(lev.Lever),
+			MarginMode: a.converter.convertMarginMode(lev.MgnMode),
+			PosSide:    a.converter.convertPositionSide(lev.PosSide),
+			Extra:      map[string]interface{}{},
 		})
 	}
 
@@ -300,7 +294,7 @@ func (a *AccountAPIAdapter) GetLeverage(ctx context.Context, req commontypes.Get
 func (a *AccountAPIAdapter) SetLeverage(ctx context.Context, req commontypes.SetLeverageRequest) (*commontypes.Leverage, error) {
 	okexReq := accountreq.SetLeverage{
 		Lever:   int64(req.Leverage),
-		MgnMode: okexconstants.MarginMode(req.MarginMode),
+		MgnMode: a.converter.toOKExMarginMode(req.MarginMode),
 	}
 
 	// OKEx supports either InstID (symbol) or Ccy (currency)
@@ -310,8 +304,8 @@ func (a *AccountAPIAdapter) SetLeverage(ctx context.Context, req commontypes.Set
 		okexReq.Ccy = req.Currency
 	}
 
-	if req.PositionSide != "" {
-		okexReq.PosSide = okexconstants.PositionSide(req.PositionSide)
+	if req.PosSide != "" {
+		okexReq.PosSide = a.converter.toOKExPositionSide(req.PosSide)
 	}
 
 	resp, err := a.client.Account.SetLeverage(okexReq)
@@ -330,11 +324,11 @@ func (a *AccountAPIAdapter) SetLeverage(ctx context.Context, req commontypes.Set
 
 	lev := resp.Leverages[0]
 	return &commontypes.Leverage{
-		Symbol:       lev.InstID,
-		Leverage:     int(lev.Lever),
-		MarginMode:   string(lev.MgnMode),
-		PositionSide: string(lev.PosSide),
-		Extra:        map[string]interface{}{},
+		Symbol:     lev.InstID,
+		Leverage:   int(lev.Lever),
+		MarginMode: a.converter.convertMarginMode(lev.MgnMode),
+		PosSide:    a.converter.convertPositionSide(lev.PosSide),
+		Extra:      map[string]interface{}{},
 	}, nil
 }
 
@@ -474,12 +468,19 @@ func (a *MarketAPIAdapter) GetCandles(ctx context.Context, req commontypes.GetCa
 	}
 
 	// Convert response to common types
+	// Note: OKX returns candles in descending order (newest first)
+	// We reverse it to ascending order (oldest first) for consistency
 	candles := make([]*commontypes.Candle, 0, len(resp.Candles))
 	for _, okexCandle := range resp.Candles {
 		candle := a.converter.ConvertCandle(okexCandle, req.Symbol, req.Interval)
 		if candle != nil {
 			candles = append(candles, candle)
 		}
+	}
+
+	// Reverse to ascending order (oldest first)
+	for i, j := 0, len(candles)-1; i < j; i, j = i+1, j-1 {
+		candles[i], candles[j] = candles[j], candles[i]
 	}
 
 	return candles, nil

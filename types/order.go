@@ -2,6 +2,7 @@ package types
 
 // Order represents a trading order
 type Order struct {
+	ClientOrderID string
 	// ID is the order ID
 	ID string
 

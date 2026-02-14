@@ -14,6 +14,8 @@ type Balance struct {
 	// Total is the total balance (Available + Frozen)
 	Total Decimal
 
+	PositionDeposit Decimal
+
 	// Extra contains exchange-specific fields
 	Extra map[string]interface{}
 }
@@ -32,3 +34,17 @@ type AccountBalance struct {
 	// Extra contains exchange-specific fields
 	Extra map[string]interface{}
 }
+
+// Account type constants for GetBalance queries
+// Use these as the first currency parameter to specify account type
+const (
+	// AccountTypeSpot indicates spot trading account (default)
+	AccountTypeSpot = "__SPOT__"
+
+	// AccountTypeFutures indicates futures/contract trading account
+	// Example: client.GetBalance(ctx, types.AccountTypeFutures, "USDT", "BTC")
+	AccountTypeFutures = "__FUTURES__"
+
+	// AccountTypeMargin indicates margin trading account
+	AccountTypeMargin = "__MARGIN__"
+)
