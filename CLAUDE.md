@@ -25,6 +25,9 @@ go run examples/simple_example/main.go
 # Run GetConfig example (handling unsupported features)
 go run examples/getconfig_example/main.go
 
+# Run BitMart leverage example
+go run examples/bitmart_leverage_example/main.go
+
 # Run native API examples
 go run examples/bitmart_rest/main.go
 go run examples/okex_rest/main.go
@@ -63,6 +66,8 @@ type Exchange interface {
     GetConfig(ctx) (*AccountConfig, error)    // ⚠️ BitMart: not supported
     GetBalance(ctx, currencies...) (*Balance, error)
     GetPositions(ctx, symbols...) ([]*Position, error)
+    GetLeverage(ctx, req) ([]*Leverage, error)    // ✅ BitMart: supported via position-v2 API
+    SetLeverage(ctx, req) (*Leverage, error)      // ⚠️ BitMart: not supported
     PlaceOrder(ctx, req) (*Order, error)
     CancelOrder(ctx, req) error
     GetOrder(ctx, req) (*Order, error)
@@ -76,10 +81,10 @@ type Exchange interface {
     UnsubscribeCandles(interval, symbols...) error   // ✅ All exchanges supported
     SubscribeBalanceAndPosition(ch) error           // ⚠️ BitMart: not supported
     UnsubscribeBalanceAndPosition() error           // ⚠️ BitMart: not supported
-    SubscribeAccount(ch, currencies...) error       // ⚠️ BitMart: not supported
-    UnsubscribeAccount(currencies...) error         // ⚠️ BitMart: not supported
-    SubscribePosition(ch, req) error                // ⚠️ BitMart: not supported
-    UnsubscribePosition(req) error                  // ⚠️ BitMart: not supported
+    SubscribeAccount(ch, currencies...) error       // ✅ BitMart: supported (futures/asset)
+    UnsubscribeAccount(currencies...) error         // ✅ BitMart: supported
+    SubscribePosition(ch, req) error                // ✅ BitMart: supported (futures/position)
+    UnsubscribePosition(req) error                  // ✅ BitMart: supported
     SubscribeOrders(ch, req) error                  // ⚠️ BitMart: not supported
     UnsubscribeOrders(req) error                    // ⚠️ BitMart: not supported
     SetChannels(errCh, subCh, unsubCh, ...) error   // ⚠️ BitMart: not supported
@@ -142,11 +147,13 @@ go-exc/
 └── examples/
     ├── simple_example/         # Single exchange usage (unified interface)
     ├── getconfig_example/      # Handling unsupported features
+    ├── bitmart_leverage_example/ # BitMart GetLeverage (query contract leverage)
     ├── websocket_tickers/      # WebSocket ticker subscriptions (unified interface)
     ├── websocket_candles/      # WebSocket candle/kline subscriptions (unified interface)
     ├── websocket_tickers_dynamic/ # Dynamic ticker subscription example
+    ├── bitmart_unified_ws_private/ # BitMart private WebSocket (unified interface)
     ├── bitmart_rest/           # BitMart REST API (native client)
-    ├── bitmart_ws/             # BitMart WebSocket (native client)
+    ├── bitmart_ws_private/     # BitMart private WebSocket (native client)
     ├── okex_rest/              # OKEx REST API (native client)
     └── okex_ws/                # OKEx WebSocket (native client)
 ```
@@ -259,17 +266,24 @@ if errors.Is(err, exc.ErrNotSupported) {
 | `SubscribeTickers()` | ✅ | ✅ |
 | `UnsubscribeTickers()` | ✅ | ✅ |
 
+**Supported Private WebSocket Features:**
+| Method | BitMart | OKEx |
+|--------|---------|------|
+| `SubscribeAccount()` | ✅ | ✅ |
+| `SubscribePosition()` | ✅ | ✅ |
+
 **Unsupported Features:**
 | Method | BitMart | OKEx |
 |--------|---------|------|
 | `GetConfig()` | ❌ | ✅ |
 | `SubscribeBalanceAndPosition()` | ❌ | ✅ |
-| `SubscribeAccount()` | ❌ | ✅ |
-| `SubscribePosition()` | ❌ | ✅ |
 | `SubscribeOrders()` | ❌ | ✅ |
 | `SetChannels()` | ❌ | ✅ |
 
-**Note:** For BitMart WebSocket features, use the native WebSocket client directly via `client.WebSocket()`.
+**Note:**
+- BitMart's `SubscribeAccount()` maps to `futures/asset:CURRENCY` channels
+- BitMart's `SubscribePosition()` maps to `futures/position` channel
+- For additional BitMart-specific WebSocket features, use the native client via `client.WebSocket()`
 
 ## Writing Exchange-Agnostic Code
 
@@ -339,6 +353,40 @@ if errors.Is(err, exc.ErrNotSupported) {
 }
 ```
 
+### `examples/bitmart_leverage_example/` - BitMart GetLeverage
+
+**Purpose:** Demonstrates how to query leverage configuration for BitMart contract positions
+
+**Key Features:**
+- Query leverage for all positions
+- Query leverage for specific symbols
+- Support for both one-way and hedge position modes
+- Retrieve detailed position information (mark price, entry price, PnL, etc.)
+
+**API Used:** BitMart `/contract/private/position-v2`
+
+```go
+// Get leverage for all positions
+leverages, _ := client.GetLeverage(ctx, commontypes.GetLeverageRequest{})
+
+// Get leverage for specific symbols
+leverages, _ := client.GetLeverage(ctx, commontypes.GetLeverageRequest{
+    Symbols: []string{"BTCUSDT", "ETHUSDT"},
+})
+
+// Access leverage information
+for _, lev := range leverages {
+    fmt.Printf("Symbol: %s, Leverage: %dx, Mode: %s, Side: %s\n",
+        lev.Symbol, lev.Leverage, lev.MarginMode, lev.PosSide)
+}
+```
+
+**Important Notes:**
+- BitMart uses no separator in symbols (e.g., `BTCUSDT`, not `BTC_USDT`)
+- One-way mode: `position_side = "both"` (converted to `PositionSideNet`)
+- Hedge mode: Separate long/short positions with `position_side = "long"/"short"`
+- Requires valid API credentials with contract trading permissions
+
 ### `examples/websocket_tickers/` - WebSocket Ticker Subscriptions
 
 **Purpose:** Demonstrates real-time ticker updates via WebSocket using the unified `Exchange` interface
@@ -403,36 +451,70 @@ for update := range candleCh {
 
 // 4. Unsubscribe when done
 err := client.UnsubscribeCandles("1m", "BTC-USDT", "ETH-USDT")
-client, _ := exc.NewExchange(ctx, EXCHANGE_TYPE, config)
-
-// 3. Subscribe - same code for all exchanges!
-updateCh := make(chan *exc.BalanceAndPositionUpdate, 10)
-err := client.SubscribeBalanceAndPosition(updateCh)
-
-// 4. Handle unsupported features gracefully
-if errors.Is(err, exc.ErrNotSupported) {
-    log.Println("Feature not supported by this exchange")
-}
-
-// Subscribe to orders for specific instrument type
-orderCh := make(chan *exc.OrderUpdate, 10)
-req := exc.WebSocketSubscribeRequest{
-    InstrumentType: "SWAP",
-    Symbols: []string{"BTC-USDT-SWAP"},
-}
-err := client.SubscribeOrders(orderCh, req)
-
-// Setup event channels
-errCh := make(chan *exc.WebSocketError, 10)
-subCh := make(chan *exc.WebSocketSubscribe, 10)
-err := client.SetChannels(errCh, subCh, unsubCh, loginCh, successCh)
 ```
 
+### `examples/bitmart_unified_ws_private/` - BitMart Private WebSocket (Unified Interface)
+
+**Purpose:** Demonstrates BitMart's WebSocket private channels using the unified `Exchange` interface
+
+**Key Concept:** Subscribe to account balance and position updates through the same interface used by all exchanges
+
+**Key Features:**
+- SubscribeAccount() - Real-time balance updates for futures accounts
+- SubscribePosition() - Real-time position updates
+- Automatic WebSocket authentication
+- Type conversion from BitMart-specific to common types
+- Works with the unified Exchange interface
+
+```go
+// 1. Create exchange client (handles connection and authentication automatically)
+client, _ := exc.NewExchange(ctx, exc.BitMart, exc.Config{
+    APIKey:    "your-key",
+    SecretKey: "your-secret",
+    Extra:     map[string]interface{}{"memo": "your-memo"},
+})
+
+// 2. Subscribe to account balance updates
+accountCh := make(chan *commontypes.AccountUpdate, 100)
+err := client.SubscribeAccount(accountCh, "USDT", "BTC")
+
+// 3. Subscribe to position updates
+positionCh := make(chan *commontypes.PositionUpdate, 100)
+req := commontypes.WebSocketSubscribeRequest{}
+err := client.SubscribePosition(positionCh, req)
+
+// 4. Process updates
+for {
+    select {
+    case update := <-accountCh:
+        // Handle balance update
+        for _, balance := range update.Balances {
+            fmt.Printf("%s: %s available\n", balance.Currency, balance.Available)
+        }
+
+    case update := <-positionCh:
+        // Handle position update
+        for _, pos := range update.Positions {
+            fmt.Printf("%s: %s %s @ %s\n",
+                pos.Symbol, pos.PosSide, pos.Quantity, pos.AvgPrice)
+        }
+    }
+}
+
+// 5. Unsubscribe when done
+client.UnsubscribeAccount("USDT", "BTC")
+client.UnsubscribePosition(req)
+```
+
+**BitMart Channel Mapping:**
+- `SubscribeAccount(ch, "USDT")` → `futures/asset:USDT` WebSocket channel
+- `SubscribePosition(ch, req)` → `futures/position` WebSocket channel
+
 **Important Notes:**
-- Requires valid API credentials with WebSocket permissions
-- Currently only supported by OKEx (BitMart returns `ErrNotSupported`)
-- Demonstrates the power of the unified `Exchange` interface
-- For exchange-specific features, use the native client directly
+- Requires valid API credentials with futures trading permissions
+- Updates are push-only (sent when values change)
+- Supports both hedge mode and one-way mode for positions
+- The adapter handles WebSocket connection, login, and type conversion automatically
 
 ### Native API Examples
 

@@ -573,7 +573,6 @@ func (c *Converter) ConvertPositionV2ToPosition(position *contractresponses.Posi
 
 	// Parse leverage
 	leverageInt, _ := strconv.Atoi(position.Leverage)
-	leverageDec := commontypes.NewDecimalFromInt(int64(leverageInt))
 
 	// Get absolute value for quantity
 	absQuantity, _ := currentAmount.Abs()
@@ -585,7 +584,7 @@ func (c *Converter) ConvertPositionV2ToPosition(position *contractresponses.Posi
 		AvgPrice:         c.stringToDecimal(position.EntryPrice),
 		MarkPrice:        c.stringToDecimal(position.MarkPrice),
 		LiquidationPrice: c.stringToDecimal(position.LiquidationPrice),
-		Leverage:         leverageDec,
+		Leverage:         leverageInt,
 		MarginMode:       marginMode,
 		UnrealizedPnL:    c.stringToDecimal(position.UnrealizedPnl),
 		RealizedPnL:      c.stringToDecimal(position.RealizedValue),

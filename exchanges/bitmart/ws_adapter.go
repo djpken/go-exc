@@ -391,7 +391,7 @@ func (a *WebSocketAdapter) forwardPositionEvents(internalCh chan *privateevents.
 				AvgPrice:         a.converter.stringToDecimal(data.OpenAvgPrice),
 				MarkPrice:        commontypes.ZeroDecimal, // Not provided in BitMart position update
 				LiquidationPrice: a.converter.stringToDecimal(data.LiquidatePrice),
-				Leverage:         commontypes.ZeroDecimal, // Not provided in BitMart position update
+				Leverage:         0, // Not provided in BitMart position update
 				MarginMode:       marginMode,
 				UnrealizedPnL:    commontypes.ZeroDecimal, // Not provided directly
 				RealizedPnL:      commontypes.ZeroDecimal, // Not provided directly

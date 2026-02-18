@@ -128,7 +128,7 @@ func (c *Converter) ConvertPosition(okexPos *account.Position) *commontypes.Posi
 		LiquidationPrice: c.stringToDecimal(strconv.FormatFloat(float64(okexPos.LiqPx), 'f', -1, 64)),
 		UnrealizedPnL:    c.stringToDecimal(strconv.FormatFloat(float64(okexPos.Upl), 'f', -1, 64)),
 		RealizedPnL:      c.stringToDecimal(strconv.FormatFloat(float64(okexPos.RealizedPnl), 'f', -1, 64)),
-		Leverage:         okexPos.Lever,
+		Leverage:         int(okexPos.Lever),
 		MarginMode:       c.convertMarginMode(okexPos.MgnMode),
 		CreatedAt:        commontypes.Timestamp(okexPos.CTime),
 		UpdatedAt:        commontypes.Timestamp(okexPos.UTime),
@@ -248,7 +248,7 @@ func (c *Converter) ConvertBalanceAndPosition(okexBNP *account.BalanceAndPositio
 			MarkPrice:     commontypes.MustDecimal("0"), // PosData doesn't have mark price
 			UnrealizedPnL: commontypes.MustDecimal("0"), // PosData doesn't have unrealized PnL
 			RealizedPnL:   c.stringToDecimal(strconv.FormatFloat(float64(pos.SettledPnl), 'f', -1, 64)),
-			Leverage:      commontypes.MustDecimal("0"), // PosData doesn't have leverage
+			Leverage:      0, // PosData doesn't have leverage
 			MarginMode:    c.convertMarginMode(pos.MgnMode),
 			UpdatedAt:     commontypes.Timestamp(time.Time(pos.UTime)),
 			Extra: map[string]interface{}{
