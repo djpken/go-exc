@@ -128,6 +128,18 @@ type GetContractTradesRequest struct {
 	ClientOrderID string `url:"client_order_id,omitempty"`
 }
 
+// GetContractOrderBookRequest represents request for getting contract order book depth
+type GetContractOrderBookRequest struct {
+	// Symbol is the contract trading pair (required, e.g., BTCUSDT)
+	Symbol string `json:"symbol"`
+
+	// Precision is the price step for grouping (optional)
+	Precision string `json:"precision,omitempty"`
+
+	// Count is the number of order book levels (optional, default 50, max 200)
+	Count int `json:"count,omitempty"`
+}
+
 // GetContractKlineRequest represents request for getting contract kline/candlestick data
 type GetContractKlineRequest struct {
 	// Symbol is the contract trading pair (required, e.g., BTCUSDT)

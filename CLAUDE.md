@@ -178,7 +178,24 @@ client, _ := exc.NewExchange(ctx, exc.BitMart, config)
 - `exc.BitMart` - Production
 - `exc.BitMartTEST` - Test (no separate test server, same as production)
 
-**Symbol Format:** `BTC_USDT` (underscore)
+**Symbol Format:**
+- Spot: `BTC_USDT` (underscore)
+- Contract/Swap: `BTCUSDT` (no separator)
+
+**IMPORTANT - BitMart Spot vs Swap API separation:**
+BitMart uses completely different REST endpoints for spot and contract/swap markets:
+| Feature      | Spot API                      | Contract/Swap API               |
+|--------------|-------------------------------|----------------------------------|
+| Order Book   | `/spot/quotation/v3/books`    | `/contract/public/depth`         |
+| Klines       | `/spot/quotation/v3/klines`   | `/contract/public/kline`         |
+| Orders       | `/spot/v2/submit-order`       | `/contract/private/submit-order` |
+| Balance      | `/spot/v1/wallet`             | `/contract/private/assets-detail`|
+
+The adapters (`rest_adapter.go`) auto-detect which API to call based on symbol format:
+- Symbol contains `_` → Spot API
+- Symbol has no `_`  → Contract/Swap API
+
+Always use the correct symbol format to route to the right API.
 
 ### OKEx
 

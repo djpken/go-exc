@@ -112,6 +112,20 @@ type SubmitLeverageResponse struct {
 	} `json:"data"`
 }
 
+// ContractOrderBookEntry represents a single order book entry as [price, size, ?]
+type ContractOrderBookEntry []string
+
+// GetContractOrderBookResponse represents contract order book depth API response
+// API: GET /contract/public/depth
+type GetContractOrderBookResponse struct {
+	BaseResponse
+	Data struct {
+		Asks      []ContractOrderBookEntry `json:"asks"`
+		Bids      []ContractOrderBookEntry `json:"bids"`
+		Timestamp int64                   `json:"timestamp"`
+	} `json:"data"`
+}
+
 // ContractKlineData represents a single kline/candlestick data point
 type ContractKlineData struct {
 	Timestamp  int64  `json:"timestamp"`   // Time window (seconds)

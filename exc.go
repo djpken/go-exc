@@ -95,12 +95,12 @@ const (
 //
 // Usage:
 //
-//	client, _ := exc.NewExchange(ctx, exc.BitMart, config)
+//	client, _ := exc.NewExchange(ctx, exc.Bitmart, config)
 //	ticker, _ := client.GetTicker(ctx, "BTC_USDT")  // Works for all exchanges
 type Exchange interface {
 	// ========== Basic Methods ==========
 
-	// Name returns the exchange name (e.g., "BitMart", "OKEx")
+	// Name returns the exchange name (e.g., "Bitmart", "OKEx")
 	Name() string
 
 	// REST returns the exchange-specific REST API adapter
@@ -124,7 +124,7 @@ type Exchange interface {
 	// --- Market Data ---
 
 	// GetTicker gets the latest ticker/price information for a symbol
-	// symbol: Trading pair symbol (e.g., "BTC_USDT" for BitMart, "BTC-USDT" for OKEx)
+	// symbol: Trading pair symbol (e.g., "BTC_USDT" for Bitmart, "BTC-USDT" for OKEx)
 	// Returns: Ticker with price, volume, and timestamp information
 	GetTicker(ctx context.Context, symbol string) (*Ticker, error)
 
@@ -138,6 +138,12 @@ type Exchange interface {
 	// Returns: List of Instrument objects with trading pair details
 	GetInstruments(ctx context.Context, req GetInstrumentsRequest) ([]*Instrument, error)
 
+	// GetOrderBook gets the current order book for a symbol
+	// symbol: Trading pair symbol (e.g., "BTC_USDT" for Bitmart, "BTC-USDT" for OKEx)
+	// depth: Number of order book levels to retrieve (0 = exchange default)
+	// Returns: OrderBook with bids and asks at each price level
+	GetOrderBook(ctx context.Context, symbol string, depth int) (*OrderBook, error)
+
 	// GetCandles gets historical candlestick/kline data
 	// req: GetCandlesRequest with symbol, interval, limit, and optional time range
 	// Returns: List of Candle objects with OHLCV data
@@ -147,7 +153,7 @@ type Exchange interface {
 
 	// GetConfig gets account configuration settings
 	// Returns: AccountConfig with user ID, account level, position mode, etc.
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	GetConfig(ctx context.Context) (*AccountConfig, error)
 
 	// GetBalance gets account balance information
@@ -158,19 +164,19 @@ type Exchange interface {
 	// GetPositions gets current open positions (for futures/margin trading)
 	// symbols: Optional list of symbols to query (empty = all positions)
 	// Returns: List of Position objects
-	// Note: Returns empty list for spot-only exchanges like BitMart
+	// Note: Returns empty list for spot-only exchanges like Bitmart
 	GetPositions(ctx context.Context, symbols ...string) ([]*Position, error)
 
 	// GetLeverage gets leverage configuration for trading pairs
 	// req: GetLeverageRequest with symbols and margin mode
 	// Returns: List of Leverage objects with current leverage settings
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	GetLeverage(ctx context.Context, req GetLeverageRequest) ([]*Leverage, error)
 
 	// SetLeverage sets leverage for a trading pair
 	// req: SetLeverageRequest with symbol/currency, leverage multiplier, margin mode
 	// Returns: Updated Leverage object
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	SetLeverage(ctx context.Context, req SetLeverageRequest) (*Leverage, error)
 
 	// --- Trading Operations ---
@@ -219,38 +225,38 @@ type Exchange interface {
 	// SubscribeBalanceAndPosition subscribes to balance and position updates via WebSocket
 	// ch: Channel to receive BalanceAndPositionUpdate events
 	// Returns: Error if subscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	SubscribeBalanceAndPosition(ch chan *BalanceAndPositionUpdate) error
 
 	// UnsubscribeBalanceAndPosition unsubscribes from balance and position updates
 	// Returns: Error if unsubscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	UnsubscribeBalanceAndPosition() error
 
 	// SubscribeAccount subscribes to account balance updates via WebSocket
 	// currencies: Optional list of currencies to subscribe (empty = all currencies)
 	// ch: Channel to receive AccountUpdate events
 	// Returns: Error if subscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	SubscribeAccount(ch chan *AccountUpdate, currencies ...string) error
 
 	// UnsubscribeAccount unsubscribes from account balance updates
 	// currencies: Optional list of currencies to unsubscribe (empty = all currencies)
 	// Returns: Error if unsubscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	UnsubscribeAccount(currencies ...string) error
 
 	// SubscribePosition subscribes to position updates via WebSocket
 	// ch: Channel to receive PositionUpdate events
 	// req: WebSocketSubscribeRequest with subscription parameters
 	// Returns: Error if subscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	SubscribePosition(ch chan *PositionUpdate, req WebSocketSubscribeRequest) error
 
 	// UnsubscribePosition unsubscribes from position updates
 	// req: WebSocketSubscribeRequest with subscription parameters
 	// Returns: Error if unsubscription failed
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	UnsubscribePosition(req WebSocketSubscribeRequest) error
 
 	// SetChannels sets channels for receiving WebSocket events
@@ -261,7 +267,7 @@ type Exchange interface {
 	// successCh: Channel to receive success events
 	// systemMsgCh: Channel to receive system messages (connection, reconnection, etc.)
 	// systemErrCh: Channel to receive system errors (connection failures, etc.)
-	// Note: Not all exchanges support this (BitMart returns ErrNotSupported)
+	// Note: Not all exchanges support this (Bitmart returns ErrNotSupported)
 	SetChannels(
 		errCh chan *WebSocketError,
 		subCh chan *WebSocketSubscribe,

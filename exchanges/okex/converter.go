@@ -375,6 +375,7 @@ func (c *Converter) ConvertInstrument(okexInst *publicdata.Instrument, ticker ma
 			QuantityPrecision: c.stringToDecimal(strconv.FormatFloat(float64(okexInst.LotSz), 'f', -1, 64)),
 			MaxLever:          int(okexInst.Lever),
 			LastPrice:         c.stringToDecimal(strconv.FormatFloat(float64(ticker.Last), 'f', -1, 64)),
+			ListTime:          commontypes.Timestamp(time.Time(okexInst.ListTime)),
 		}
 	}
 
@@ -391,6 +392,38 @@ func (c *Converter) ConvertInstrument(okexInst *publicdata.Instrument, ticker ma
 		QuantityPrecision: c.stringToDecimal(strconv.FormatFloat(float64(okexInst.LotSz), 'f', -1, 64)),
 		MaxLever:          int(okexInst.Lever),
 		LastPrice:         c.stringToDecimal(strconv.FormatFloat(float64(ticker.Last), 'f', -1, 64)),
+		ListTime:          commontypes.Timestamp(time.Time(okexInst.ListTime)),
+	}
+}
+
+// ConvertOrderBook converts OKEx order book to common OrderBook type
+func (c *Converter) ConvertOrderBook(okexOB *market.OrderBook, symbol string) *commontypes.OrderBook {
+	if okexOB == nil {
+		return nil
+	}
+
+	bids := make([]commontypes.OrderBookLevel, len(okexOB.Bids))
+	for i, b := range okexOB.Bids {
+		bids[i] = commontypes.OrderBookLevel{
+			Price:    c.stringToDecimal(strconv.FormatFloat(b.DepthPrice, 'f', -1, 64)),
+			Quantity: c.stringToDecimal(strconv.FormatFloat(b.Size, 'f', -1, 64)),
+		}
+	}
+
+	asks := make([]commontypes.OrderBookLevel, len(okexOB.Asks))
+	for i, a := range okexOB.Asks {
+		asks[i] = commontypes.OrderBookLevel{
+			Price:    c.stringToDecimal(strconv.FormatFloat(a.DepthPrice, 'f', -1, 64)),
+			Quantity: c.stringToDecimal(strconv.FormatFloat(a.Size, 'f', -1, 64)),
+		}
+	}
+
+	return &commontypes.OrderBook{
+		Symbol:    symbol,
+		Bids:      bids,
+		Asks:      asks,
+		Timestamp: commontypes.Timestamp(okexOB.TS),
+		Extra:     map[string]interface{}{},
 	}
 }
 

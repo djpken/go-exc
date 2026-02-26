@@ -267,6 +267,11 @@ type Instrument struct {
 
 	// LastPrice is the last trade price
 	LastPrice Decimal
+
+	// ListTime is the time when the instrument was listed/opened for trading.
+	// Corresponds to OKX listTime and BitMart open_timestamp (Unix milliseconds).
+	ListTime Timestamp
+
 	// Extra contains exchange-specific fields
 	Extra    map[string]interface{}
 	MaxLever int

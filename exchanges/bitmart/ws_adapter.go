@@ -284,7 +284,7 @@ func (a *WebSocketAdapter) forwardAccountEvents(internalCh chan *privateevents.F
 		// Create AccountUpdate
 		update := &commontypes.AccountUpdate{
 			Balances:    []*commontypes.Balance{balance},
-			EventType:   "update",
+			EventType:   "event_update",
 			UpdatedAt:   commontypes.Timestamp(time.Now()),
 			TotalEquity: commontypes.ZeroDecimal,
 			Extra: map[string]interface{}{
@@ -412,7 +412,7 @@ func (a *WebSocketAdapter) forwardPositionEvents(internalCh chan *privateevents.
 		// Create PositionUpdate
 		update := &commontypes.PositionUpdate{
 			Positions: positions,
-			EventType: "update",
+			EventType: "event_update",
 			UpdatedAt: commontypes.Timestamp(time.Now()),
 			Extra: map[string]interface{}{
 				"group": event.Group,

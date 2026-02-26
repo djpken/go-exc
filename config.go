@@ -23,7 +23,8 @@ const (
 	OKX         ExchangeType = "OKX"
 	OKXTest     ExchangeType = "OKX-TEST"
 	Binance     ExchangeType = "BINANCE"
-	BitMart     ExchangeType = "BITMART"
-	BitMartTest ExchangeType = "BITMART-TEST"
+	Bitmart     ExchangeType = "BITMART"
+	BitmartTest ExchangeType = "BITMART-TEST"
 	BingX       ExchangeType = "BING-X"
+	BingXTest   ExchangeType = "BING-X-TEST"
 )

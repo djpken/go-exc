@@ -3,6 +3,7 @@ package bitmart
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	accountreq "github.com/djpken/go-exc/exchanges/bitmart/requests/rest/account"
@@ -528,8 +529,30 @@ func (a *MarketAPIAdapter) GetInstruments(ctx context.Context) ([]*commontypes.I
 }
 
 // GetOrderBook gets order book
+// Automatically routes to spot or contract API based on symbol format:
+//   - Spot:     symbol contains "_" (e.g., "BTC_USDT") → /spot/quotation/v3/books
+//   - Contract: symbol has no "_" (e.g., "BTCUSDT")    → /contract/public/depth
 func (a *MarketAPIAdapter) GetOrderBook(ctx context.Context, symbol string, depth int) (*commontypes.OrderBook, error) {
-	validDepth := 20 // default
+	isContract := !strings.Contains(symbol, "_")
+
+	if isContract {
+		req := contractreq.GetContractOrderBookRequest{
+			Symbol: symbol,
+		}
+		if depth > 0 {
+			req.Count = depth
+		}
+
+		resp, err := a.client.Contract.GetOrderBook(req)
+		if err != nil {
+			return nil, err
+		}
+
+		return a.converter.ConvertContractOrderBook(resp, symbol), nil
+	}
+
+	// Spot: valid depth values are 5, 20, 50
+	validDepth := 20
 	switch depth {
 	case 5, 20, 50:
 		validDepth = depth

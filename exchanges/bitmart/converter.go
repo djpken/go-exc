@@ -302,6 +302,41 @@ func (c *Converter) ConvertOrderBook(ob interface{}, symbol string) *commontypes
 	}
 }
 
+// ConvertContractOrderBook converts BitMart contract order book to common order book type
+// Contract order book entries are []string{price, size, ...}
+func (c *Converter) ConvertContractOrderBook(resp *contractresponses.GetContractOrderBookResponse, symbol string) *commontypes.OrderBook {
+	if resp == nil {
+		return nil
+	}
+
+	bids := make([]commontypes.OrderBookLevel, 0, len(resp.Data.Bids))
+	for _, bid := range resp.Data.Bids {
+		if len(bid) >= 2 {
+			bids = append(bids, commontypes.OrderBookLevel{
+				Price:    c.stringToDecimal(bid[0]),
+				Quantity: c.stringToDecimal(bid[1]),
+			})
+		}
+	}
+
+	asks := make([]commontypes.OrderBookLevel, 0, len(resp.Data.Asks))
+	for _, ask := range resp.Data.Asks {
+		if len(ask) >= 2 {
+			asks = append(asks, commontypes.OrderBookLevel{
+				Price:    c.stringToDecimal(ask[0]),
+				Quantity: c.stringToDecimal(ask[1]),
+			})
+		}
+	}
+
+	return &commontypes.OrderBook{
+		Symbol:    symbol,
+		Bids:      bids,
+		Asks:      asks,
+		Timestamp: commontypes.Timestamp(time.Unix(0, resp.Data.Timestamp*int64(time.Millisecond))),
+	}
+}
+
 // ConvertOrderStatus converts BitMart order status to common status
 func (c *Converter) ConvertOrderStatus(status string) string {
 	switch bitmarttypes.OrderStatus(status) {
@@ -386,6 +421,7 @@ func (c *Converter) ConvertInstrument(symbol *contract.ContractDetail) *commonty
 		QuantityPrecision: c.stringToDecimal(symbol.VolPrecision),
 		LastPrice:         c.stringToDecimal(symbol.LastPrice),
 		MaxLever:          maxLever,
+		ListTime:          commontypes.Timestamp(time.UnixMilli(symbol.OpenTimestamp)),
 	}
 }
 

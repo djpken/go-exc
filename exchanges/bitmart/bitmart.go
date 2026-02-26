@@ -103,6 +103,11 @@ func (e *BitMartExchange) GetInstruments(ctx context.Context, req commontypes.Ge
 	return e.restAPI.Market().GetInstruments(ctx)
 }
 
+// GetOrderBook gets order book information
+func (e *BitMartExchange) GetOrderBook(ctx context.Context, symbol string, depth int) (*commontypes.OrderBook, error) {
+	return e.restAPI.Market().GetOrderBook(ctx, symbol, depth)
+}
+
 // GetCandles gets historical candlestick/kline data
 func (e *BitMartExchange) GetCandles(ctx context.Context, req commontypes.GetCandlesRequest) ([]*commontypes.Candle, error) {
 	return e.restAPI.Market().GetCandles(ctx, req)

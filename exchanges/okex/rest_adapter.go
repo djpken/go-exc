@@ -430,6 +430,29 @@ func (a *MarketAPIAdapter) GetInstruments(ctx context.Context, req commontypes.G
 	return instruments, nil
 }
 
+// GetOrderBook gets order book information
+func (a *MarketAPIAdapter) GetOrderBook(ctx context.Context, symbol string, depth int) (*commontypes.OrderBook, error) {
+	req := marketreq.GetOrderBook{
+		InstID: symbol,
+		Sz:     depth,
+	}
+
+	resp, err := a.client.Market.GetOrderBook(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := checkAPIError(resp.Basic); err != nil {
+		return nil, err
+	}
+
+	if len(resp.OrderBooks) == 0 {
+		return nil, fmt.Errorf("no order book data returned for symbol %s", symbol)
+	}
+
+	return a.converter.ConvertOrderBook(resp.OrderBooks[0], symbol), nil
+}
+
 // GetCandles gets historical candlestick/kline data
 func (a *MarketAPIAdapter) GetCandles(ctx context.Context, req commontypes.GetCandlesRequest) ([]*commontypes.Candle, error) {
 	// Build OKEx request

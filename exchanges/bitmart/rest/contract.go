@@ -247,6 +247,29 @@ func (c *Contract) GetContractTrades(req contract.GetContractTradesRequest) (*re
 	return &result, nil
 }
 
+// GetOrderBook retrieves order book depth for a contract trading pair
+//
+// API: GET /contract/public/depth
+// Documentation: https://developer-pro.bitmart.com/en/futures/#get-depth
+func (c *Contract) GetOrderBook(req contract.GetContractOrderBookRequest) (*responses.GetContractOrderBookResponse, error) {
+	endpoint := fmt.Sprintf("/contract/public/depth?symbol=%s", req.Symbol)
+
+	if req.Precision != "" {
+		endpoint += fmt.Sprintf("&precision=%s", req.Precision)
+	}
+
+	if req.Count > 0 {
+		endpoint += fmt.Sprintf("&count=%d", req.Count)
+	}
+
+	var result responses.GetContractOrderBookResponse
+	if err := c.client.GET(endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // GetKline retrieves kline/candlestick data for contract trading pairs
 //
 // API: GET /contract/public/kline
