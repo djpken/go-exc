@@ -134,6 +134,16 @@ func (e *BingXExchange) PlaceOrder(ctx context.Context, req commontypes.PlaceOrd
 	return e.restAPI.Trade().PlaceOrder(ctx, req)
 }
 
+// PlaceSingleOrder places exactly one order and returns a PlaceOrderResult.
+func (e *BingXExchange) PlaceSingleOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.PlaceOrderResult, error) {
+	return e.restAPI.Trade().PlaceSingleOrder(ctx, req)
+}
+
+// PlaceMultiOrder places multiple orders and returns per-order results.
+func (e *BingXExchange) PlaceMultiOrder(ctx context.Context, reqs []commontypes.PlaceOrderRequest) ([]*commontypes.PlaceOrderResult, error) {
+	return e.restAPI.Trade().PlaceMultiOrder(ctx, reqs)
+}
+
 func (e *BingXExchange) CancelOrder(ctx context.Context, req commontypes.CancelOrderRequest) error {
 	return e.restAPI.Trade().CancelOrder(ctx, req.Symbol, req.OrderID, req.Extra)
 }
@@ -179,13 +189,15 @@ func (e *BingXExchange) UnsubscribeAccount(currencies ...string) error {
 	return e.wsAPI.UnsubscribeAccount(currencies...)
 }
 
-// SubscribePosition is not supported by BingX (no position push event exists).
-func (e *BingXExchange) SubscribePosition(_ chan *commontypes.PositionUpdate, _ commontypes.WebSocketSubscribeRequest) error {
-	return commontypes.ErrNotSupported
+// SubscribePosition subscribes to position updates via the private WebSocket.
+// BingX carries position changes inside ACCOUNT_UPDATE events (the "P" array).
+// A listen key is obtained automatically via the REST API on first call.
+func (e *BingXExchange) SubscribePosition(ch chan *commontypes.PositionUpdate, req commontypes.WebSocketSubscribeRequest) error {
+	return e.wsAPI.SubscribePosition(ch, req)
 }
 
-func (e *BingXExchange) UnsubscribePosition(_ commontypes.WebSocketSubscribeRequest) error {
-	return commontypes.ErrNotSupported
+func (e *BingXExchange) UnsubscribePosition(req commontypes.WebSocketSubscribeRequest) error {
+	return e.wsAPI.UnsubscribePosition(req)
 }
 
 // SubscribeOrders subscribes to ORDER_TRADE_UPDATE events via the private WebSocket.

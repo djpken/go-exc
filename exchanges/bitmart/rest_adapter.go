@@ -178,6 +178,26 @@ func (a *TradeAPIAdapter) placeContractOrder(ctx context.Context, commonReq comm
 	return a.converter.ConvertContractOrder(resp), nil
 }
 
+// PlaceSingleOrder places exactly one order and wraps the result in PlaceOrderResult.
+func (a *TradeAPIAdapter) PlaceSingleOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.PlaceOrderResult, error) {
+	order, err := a.PlaceOrder(ctx, req)
+	if err != nil {
+		return &commontypes.PlaceOrderResult{Error: err}, nil
+	}
+	return &commontypes.PlaceOrderResult{Order: order}, nil
+}
+
+// PlaceMultiOrder places multiple orders sequentially and returns per-order results.
+// BitMart has no native batch-order API, so orders are sent one by one.
+func (a *TradeAPIAdapter) PlaceMultiOrder(ctx context.Context, reqs []commontypes.PlaceOrderRequest) ([]*commontypes.PlaceOrderResult, error) {
+	results := make([]*commontypes.PlaceOrderResult, len(reqs))
+	for i, req := range reqs {
+		order, err := a.PlaceOrder(ctx, req)
+		results[i] = &commontypes.PlaceOrderResult{Order: order, Error: err}
+	}
+	return results, nil
+}
+
 // CancelOrder cancels an existing order
 func (a *TradeAPIAdapter) CancelOrder(ctx context.Context, symbol, orderID string, extra map[string]interface{}) error {
 	req := tradereq.CancelOrderRequest{

@@ -17,6 +17,10 @@ type WebSocketAdapter struct {
 
 	tickerChannels map[string]chan *commontypes.TickerUpdate
 	candleChannels map[string]map[string]chan *commontypes.CandleUpdate // interval->symbol->ch
+
+	// Private channel fan-out targets (ACCOUNT_UPDATE carries both balance and position data)
+	accountChannel  chan *commontypes.AccountUpdate
+	positionChannel chan *commontypes.PositionUpdate
 }
 
 func NewWebSocketAdapter(client *ws.ClientWs, privateClient *ws.PrivateClientWs) *WebSocketAdapter {
@@ -214,6 +218,7 @@ func (a *WebSocketAdapter) UnsubscribeCandles(interval string, symbols ...string
 // ─── Private channels ────────────────────────────────────────────────────────
 
 // accountUpdateMsg is the structure of a BingX ACCOUNT_UPDATE private push.
+// BingX sends both balance changes (B) and position changes (P) in the same event.
 type accountUpdateMsg struct {
 	EventType string `json:"e"` // "ACCOUNT_UPDATE"
 	EventTime int64  `json:"E"`
@@ -225,7 +230,100 @@ type accountUpdateMsg struct {
 			Cross  string `json:"cw"` // cross wallet balance
 			Delta  string `json:"bc"` // balance change amount
 		} `json:"B"`
+		Positions []struct {
+			Symbol        string `json:"s"`  // symbol
+			Amount        string `json:"pa"` // position amount
+			EntryPrice    string `json:"ep"` // entry price
+			RealizedPnL   string `json:"cr"` // accumulated realized PNL
+			UnrealizedPnL string `json:"up"` // unrealized PNL
+			MarginType    string `json:"mt"` // margin type (isolated/crossed)
+			IsoWallet     string `json:"iw"` // isolated wallet (isolated mode only)
+			PosSide       string `json:"ps"` // LONG / SHORT / BOTH
+		} `json:"P"`
 	} `json:"a"`
+}
+
+// registerAccountUpdateHandler (re-)registers a single ACCOUNT_UPDATE handler that fans out
+// to accountChannel and positionChannel. It must be called whenever either channel changes.
+func (a *WebSocketAdapter) registerAccountUpdateHandler() error {
+	conv := a.converter
+	return a.privateClient.RegisterHandler("ACCOUNT_UPDATE", func(data []byte) {
+		var msg accountUpdateMsg
+		if err := json.Unmarshal(data, &msg); err != nil {
+			return
+		}
+
+		// --- account balance fan-out ---
+		if ch := a.accountChannel; ch != nil {
+			balances := make([]*commontypes.Balance, 0, len(msg.Account.Balances))
+			for _, b := range msg.Account.Balances {
+				balances = append(balances, &commontypes.Balance{
+					Currency:  b.Asset,
+					Total:     conv.str(b.Wallet),
+					Available: conv.str(b.Cross),
+					Extra: map[string]interface{}{
+						"balanceChange": b.Delta,
+					},
+				})
+			}
+			update := &commontypes.AccountUpdate{
+				Balances:  balances,
+				EventType: "update",
+				UpdatedAt: commontypes.Timestamp(time.UnixMilli(msg.EventTime)),
+				Extra: map[string]interface{}{
+					"reason": msg.Account.Reason,
+				},
+			}
+			select {
+			case ch <- update:
+			default:
+			}
+		}
+
+		// --- position fan-out ---
+		if ch := a.positionChannel; ch != nil && len(msg.Account.Positions) > 0 {
+			positions := make([]*commontypes.Position, 0, len(msg.Account.Positions))
+			for _, p := range msg.Account.Positions {
+				var posSide commontypes.PositionSide
+				switch p.PosSide {
+				case "LONG":
+					posSide = commontypes.PositionSideLong
+				case "SHORT":
+					posSide = commontypes.PositionSideShort
+				default:
+					posSide = commontypes.PositionSideNet
+				}
+				var marginMode commontypes.MarginMode
+				switch p.MarginType {
+				case "isolated":
+					marginMode = commontypes.MarginModeIsolated
+				default:
+					marginMode = commontypes.MarginModeCross
+				}
+				positions = append(positions, &commontypes.Position{
+					Symbol:        p.Symbol,
+					PosSide:       posSide,
+					Quantity:      conv.str(p.Amount),
+					AvgPrice:      conv.str(p.EntryPrice),
+					UnrealizedPnL: conv.str(p.UnrealizedPnL),
+					RealizedPnL:   conv.str(p.RealizedPnL),
+					MarginMode:    marginMode,
+					Extra: map[string]interface{}{
+						"isoWallet": p.IsoWallet,
+					},
+				})
+			}
+			update := &commontypes.PositionUpdate{
+				Positions: positions,
+				EventType: "update",
+				UpdatedAt: commontypes.Timestamp(time.UnixMilli(msg.EventTime)),
+			}
+			select {
+			case ch <- update:
+			default:
+			}
+		}
+	})
 }
 
 // orderTradeUpdateMsg is the structure of a BingX ORDER_TRADE_UPDATE private push.
@@ -253,51 +351,52 @@ type orderTradeUpdateMsg struct {
 	} `json:"o"`
 }
 
-// SubscribeAccount registers a handler for ACCOUNT_UPDATE events.
+// SubscribeAccount registers for ACCOUNT_UPDATE balance events.
 // The currencies parameter is ignored — BingX pushes all assets in a single event.
 func (a *WebSocketAdapter) SubscribeAccount(userCh chan *commontypes.AccountUpdate, _ ...string) error {
 	if a.privateClient == nil {
 		return commontypes.ErrNotSupported
 	}
-	conv := a.converter
-	return a.privateClient.RegisterHandler("ACCOUNT_UPDATE", func(data []byte) {
-		var msg accountUpdateMsg
-		if err := json.Unmarshal(data, &msg); err != nil {
-			return
-		}
-		balances := make([]*commontypes.Balance, 0, len(msg.Account.Balances))
-		for _, b := range msg.Account.Balances {
-			balances = append(balances, &commontypes.Balance{
-				Currency:  b.Asset,
-				Total:     conv.str(b.Wallet),
-				Available: conv.str(b.Cross),
-				Extra: map[string]interface{}{
-					"balanceChange": b.Delta,
-				},
-			})
-		}
-		update := &commontypes.AccountUpdate{
-			Balances:  balances,
-			EventType: "update",
-			UpdatedAt: commontypes.Timestamp(time.UnixMilli(msg.EventTime)),
-			Extra: map[string]interface{}{
-				"reason": msg.Account.Reason,
-			},
-		}
-		select {
-		case userCh <- update:
-		default:
-		}
-	})
+	a.accountChannel = userCh
+	return a.registerAccountUpdateHandler()
 }
 
-// UnsubscribeAccount removes the ACCOUNT_UPDATE handler.
+// UnsubscribeAccount removes the account balance listener.
+// If a position listener is still active, the underlying handler is re-registered without account fan-out.
 func (a *WebSocketAdapter) UnsubscribeAccount(_ ...string) error {
 	if a.privateClient == nil {
 		return nil
 	}
-	a.privateClient.UnregisterHandler("ACCOUNT_UPDATE")
-	return nil
+	a.accountChannel = nil
+	if a.positionChannel == nil {
+		a.privateClient.UnregisterHandler("ACCOUNT_UPDATE")
+		return nil
+	}
+	return a.registerAccountUpdateHandler()
+}
+
+// SubscribePosition registers for position updates carried inside ACCOUNT_UPDATE events.
+// BingX sends position changes in the same event as balance changes (a.P array).
+func (a *WebSocketAdapter) SubscribePosition(userCh chan *commontypes.PositionUpdate, _ commontypes.WebSocketSubscribeRequest) error {
+	if a.privateClient == nil {
+		return commontypes.ErrNotSupported
+	}
+	a.positionChannel = userCh
+	return a.registerAccountUpdateHandler()
+}
+
+// UnsubscribePosition removes the position listener.
+// If an account listener is still active, the underlying handler is re-registered without position fan-out.
+func (a *WebSocketAdapter) UnsubscribePosition(_ commontypes.WebSocketSubscribeRequest) error {
+	if a.privateClient == nil {
+		return nil
+	}
+	a.positionChannel = nil
+	if a.accountChannel == nil {
+		a.privateClient.UnregisterHandler("ACCOUNT_UPDATE")
+		return nil
+	}
+	return a.registerAccountUpdateHandler()
 }
 
 // SubscribeOrders registers a handler for ORDER_TRADE_UPDATE events.

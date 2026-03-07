@@ -49,6 +49,7 @@ type (
 	GetTickersRequest     = types.GetTickersRequest
 	GetCandlesRequest     = types.GetCandlesRequest
 	Leverage              = types.Leverage
+	PlaceOrderResult      = types.PlaceOrderResult
 
 	// WebSocket types
 	BalanceAndPositionUpdate  = types.BalanceAndPositionUpdate
@@ -185,6 +186,18 @@ type Exchange interface {
 	// req: PlaceOrderRequest with symbol, side (buy/sell), type (limit/market), quantity, price
 	// Returns: Order object with order ID and current status
 	PlaceOrder(ctx context.Context, req PlaceOrderRequest) (*Order, error)
+
+	// PlaceSingleOrder places exactly one order and returns its result.
+	// Behaves like PlaceOrder but is explicit about single-order semantics.
+	// For OKEx this guarantees only the first per-order error is inspected.
+	// Returns PlaceOrderResult so the response shape is consistent with PlaceMultiOrder.
+	PlaceSingleOrder(ctx context.Context, req PlaceOrderRequest) (*PlaceOrderResult, error)
+
+	// PlaceMultiOrder places multiple orders in one call.
+	// Returns one PlaceOrderResult per request — each entry carries either a
+	// filled Order or an Error, so partial failures are visible to the caller.
+	// The outer error is only set for transport-level / API-level failures.
+	PlaceMultiOrder(ctx context.Context, reqs []PlaceOrderRequest) ([]*PlaceOrderResult, error)
 
 	// CancelOrder cancels an existing order
 	// req: CancelOrderRequest with symbol and order ID

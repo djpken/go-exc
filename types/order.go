@@ -16,7 +16,7 @@ type Order struct {
 	Type string
 
 	// Status is the order status
-	Status string
+	Status OrderStatus
 
 	// Price is the order price
 	Price Decimal
@@ -44,6 +44,15 @@ type Order struct {
 
 	// Extra contains exchange-specific fields
 	Extra map[string]interface{}
+}
+
+// PlaceOrderResult holds the outcome of a single order in a batch operation.
+// Used with PlaceMultiOrder to report per-order success or failure independently.
+type PlaceOrderResult struct {
+	// Order is populated when the exchange accepted the order.
+	Order *Order
+	// Error is non-nil when the exchange rejected this specific order.
+	Error error
 }
 
 // ===========================================

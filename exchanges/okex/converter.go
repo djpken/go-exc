@@ -54,7 +54,7 @@ func (c *Converter) ConvertOrder(okexOrder *trade.Order) *commontypes.Order {
 		Symbol:            okexOrder.InstID,
 		Side:              string(okexOrder.Side),
 		Type:              string(okexOrder.OrdType),
-		Status:            string(okexOrder.State),
+		Status:            commontypes.OrderStatus(okexOrder.State),
 		Price:             c.stringToDecimal(strconv.FormatFloat(price, 'f', -1, 64)),
 		Quantity:          c.stringToDecimal(strconv.FormatFloat(quantity, 'f', -1, 64)),
 		FilledQuantity:    c.stringToDecimal(strconv.FormatFloat(filledQty, 'f', -1, 64)),

@@ -146,6 +146,19 @@ func (e *BitMartExchange) PlaceOrder(ctx context.Context, req commontypes.PlaceO
 	return e.restAPI.Trade().PlaceOrder(ctx, req)
 }
 
+// PlaceSingleOrder places exactly one order and returns a PlaceOrderResult.
+func (e *BitMartExchange) PlaceSingleOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.PlaceOrderResult, error) {
+	if req.Extra == nil {
+		req.Extra = make(map[string]interface{})
+	}
+	return e.restAPI.Trade().PlaceSingleOrder(ctx, req)
+}
+
+// PlaceMultiOrder places multiple orders and returns per-order results.
+func (e *BitMartExchange) PlaceMultiOrder(ctx context.Context, reqs []commontypes.PlaceOrderRequest) ([]*commontypes.PlaceOrderResult, error) {
+	return e.restAPI.Trade().PlaceMultiOrder(ctx, reqs)
+}
+
 // CancelOrder cancels an existing order
 func (e *BitMartExchange) CancelOrder(ctx context.Context, req commontypes.CancelOrderRequest) error {
 	return e.restAPI.Trade().CancelOrder(ctx, req.Symbol, req.OrderID, req.Extra)

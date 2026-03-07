@@ -16,11 +16,16 @@ import (
 	commontypes "github.com/djpken/go-exc/types"
 )
 
-// checkAPIError checks if the API response contains an error
-// OKEx returns Code > 0 for errors
+// checkAPIError checks if the API response contains an error.
+// OKEx returns Code > 0 for errors. Returns *commontypes.APIError so callers
+// can use errors.As to inspect the Code field.
 func checkAPIError(basic responses.Basic) error {
-	if basic.Code > 0 {
-		return fmt.Errorf("OKEx API error: code=%d, msg=%s", basic.Code, basic.Msg)
+	if basic.Code != 0 && basic.Code != 1 && basic.Code != 2 {
+		return &commontypes.APIError{
+			Exchange: "OKEx",
+			Code:     basic.Code,
+			Message:  basic.Msg,
+		}
 	}
 	return nil
 }
@@ -142,6 +147,155 @@ func (a *TradeAPIAdapter) PlaceOrder(ctx context.Context, placeOrderRequest comm
 			"sMsg":    resp.PlaceOrders[0].SMsg,
 		},
 	}, nil
+}
+
+// PlaceSingleOrder places exactly one order and wraps the result in PlaceOrderResult
+// for a consistent response shape with PlaceMultiOrder.
+// Only resp.PlaceOrders[0] is inspected for per-order errors.
+func (a *TradeAPIAdapter) PlaceSingleOrder(ctx context.Context, placeOrderRequest commontypes.PlaceOrderRequest) (*commontypes.PlaceOrderResult, error) {
+	extra := placeOrderRequest.Extra
+	if extra == nil {
+		extra = make(map[string]interface{})
+	}
+	// Build OKEx order request
+	req := tradereq.PlaceOrder{
+		InstID:  placeOrderRequest.Symbol,
+		TdMode:  okexconstants.TradeMode(placeOrderRequest.TdMode),
+		Side:    okexconstants.OrderSide(placeOrderRequest.Side),
+		PosSide: okexconstants.PositionSide(placeOrderRequest.PosSide),
+		OrdType: okexconstants.OrderType(placeOrderRequest.Type),
+		Sz:      placeOrderRequest.Quantity,
+		ClOrdID: placeOrderRequest.ClientOrderID,
+	}
+
+	price := placeOrderRequest.Price
+	if price > 0 {
+		req.Px = price
+	}
+
+	// Apply extra parameters
+	if extra != nil {
+		if tag, ok := extra["tag"].(string); ok {
+			req.Tag = tag
+		}
+	}
+
+	// Place order (requires slice)
+	resp, err := a.client.Trade.PlaceOrder([]tradereq.PlaceOrder{req})
+	if err != nil {
+		return nil, err
+	}
+
+	// Check for API errors
+	if err := checkAPIError(resp.Basic); err != nil {
+		return nil, err
+	}
+
+	if len(resp.PlaceOrders) == 0 {
+		return nil, fmt.Errorf("no order data returned")
+	}
+
+	// Check if the order placement was successful
+	if resp.PlaceOrders[0].SCode != 0 {
+		err := fmt.Errorf("order placement failed: code=%d, msg=%s", resp.PlaceOrders[0].SCode, resp.PlaceOrders[0].SMsg)
+		return &commontypes.PlaceOrderResult{
+			Error: err,
+		}, nil
+	}
+
+	// Convert to common order type
+	// Note: PlaceOrder response doesn't include full order details
+	// You may need to call GetOrderDetail to get complete information
+	order := &commontypes.Order{
+		ID:            strconv.FormatFloat(float64(resp.PlaceOrders[0].OrdID), 'f', 0, 64),
+		Symbol:        placeOrderRequest.Symbol,
+		Side:          string(placeOrderRequest.Side),
+		Type:          placeOrderRequest.Type,
+		ClientOrderID: placeOrderRequest.ClientOrderID,
+		Extra: map[string]interface{}{
+			"clOrdID": resp.PlaceOrders[0].ClOrdID,
+			"sCode":   resp.PlaceOrders[0].SCode,
+			"sMsg":    resp.PlaceOrders[0].SMsg,
+		},
+	}
+	return &commontypes.PlaceOrderResult{
+		Order: order,
+		Error: nil,
+	}, nil
+}
+
+// PlaceMultiOrder places multiple orders via OKEx's batch-order endpoint and
+// returns one PlaceOrderResult per request. Per-order failures are captured in
+// PlaceOrderResult.Error; the outer error is only set for transport/API failures.
+func (a *TradeAPIAdapter) PlaceMultiOrder(ctx context.Context, reqs []commontypes.PlaceOrderRequest) ([]*commontypes.PlaceOrderResult, error) {
+	if len(reqs) == 0 {
+		return nil, nil
+	}
+
+	okexReqs := make([]tradereq.PlaceOrder, len(reqs))
+	for i, r := range reqs {
+		extra := r.Extra
+		if extra == nil {
+			extra = make(map[string]interface{})
+		}
+		or := tradereq.PlaceOrder{
+			InstID:  r.Symbol,
+			TdMode:  okexconstants.TradeMode(r.TdMode),
+			Side:    okexconstants.OrderSide(r.Side),
+			PosSide: okexconstants.PositionSide(r.PosSide),
+			OrdType: okexconstants.OrderType(r.Type),
+			Sz:      r.Quantity,
+			ClOrdID: r.ClientOrderID,
+		}
+		if r.Price > 0 {
+			or.Px = r.Price
+		}
+		if tag, ok := extra["tag"].(string); ok {
+			or.Tag = tag
+		}
+		okexReqs[i] = or
+	}
+
+	resp, err := a.client.Trade.PlaceMultipleOrders(okexReqs)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkAPIError(resp.Basic); err != nil {
+		return nil, err
+	}
+
+	results := make([]*commontypes.PlaceOrderResult, len(reqs))
+	for i := range results {
+		if i >= len(resp.PlaceOrders) {
+			results[i] = &commontypes.PlaceOrderResult{
+				Error: fmt.Errorf("okex: no response for order index %d", i),
+			}
+			continue
+		}
+		p := resp.PlaceOrders[i]
+		if p.SCode != 0 {
+			results[i] = &commontypes.PlaceOrderResult{
+				Error: fmt.Errorf("okex: order %d rejected: code=%d, msg=%s", i, p.SCode, p.SMsg),
+			}
+		} else {
+			ordID := strconv.FormatFloat(float64(p.OrdID), 'f', 0, 64)
+			results[i] = &commontypes.PlaceOrderResult{
+				Order: &commontypes.Order{
+					ID:            ordID,
+					Symbol:        reqs[i].Symbol,
+					Side:          string(reqs[i].Side),
+					Type:          reqs[i].Type,
+					ClientOrderID: p.ClOrdID,
+					Extra: map[string]interface{}{
+						"clOrdID": p.ClOrdID,
+						"sCode":   p.SCode,
+						"sMsg":    p.SMsg,
+					},
+				},
+			}
+		}
+	}
+	return results, nil
 }
 
 // CancelOrder cancels an existing order

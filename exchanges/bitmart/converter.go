@@ -338,20 +338,20 @@ func (c *Converter) ConvertContractOrderBook(resp *contractresponses.GetContract
 }
 
 // ConvertOrderStatus converts BitMart order status to common status
-func (c *Converter) ConvertOrderStatus(status string) string {
+func (c *Converter) ConvertOrderStatus(status string) commontypes.OrderStatus {
 	switch bitmarttypes.OrderStatus(status) {
 	case bitmarttypes.OrderStatusNew:
-		return string(commontypes.OrderStatusOpen)
+		return commontypes.OrderStatusOpen
 	case bitmarttypes.OrderStatusPartiallyFilled:
-		return string(commontypes.OrderStatusPartiallyFilled)
+		return commontypes.OrderStatusPartiallyFilled
 	case bitmarttypes.OrderStatusFilled:
-		return string(commontypes.OrderStatusFilled)
+		return commontypes.OrderStatusFilled
 	case bitmarttypes.OrderStatusCanceled:
-		return string(commontypes.OrderStatusCanceled)
+		return commontypes.OrderStatusCanceled
 	case bitmarttypes.OrderStatusPendingCancel:
 		return "canceling"
 	default:
-		return status
+		return commontypes.OrderStatus(status)
 	}
 }
 
@@ -627,20 +627,20 @@ func (c *Converter) ConvertPositionV2ToPosition(position *contractresponses.Posi
 		CreatedAt:        commontypes.Timestamp(time.UnixMilli(position.OpenTimestamp)),
 		UpdatedAt:        commontypes.Timestamp(time.UnixMilli(position.Timestamp)),
 		Extra: map[string]interface{}{
-			"account":              position.Account,
-			"position_value":       position.PositionValue,
-			"position_cross":       position.PositionCross,
-			"initial_margin":       position.InitialMargin,
-			"maintenance_margin":   position.MaintenanceMargin,
-			"current_fee":          position.CurrentFee,
-			"close_vol":            position.CloseVol,
-			"close_avg_price":      position.CloseAvgPrice,
-			"open_avg_price":       position.OpenAvgPrice,
-			"max_notional_value":   position.MaxNotionalValue,
-			"position_amount":      position.PositionAmount,
-			"current_amount":       position.CurrentAmount,
-			"mark_value":           position.MarkValue,
-			"current_value":        position.CurrentValue,
+			"account":            position.Account,
+			"position_value":     position.PositionValue,
+			"position_cross":     position.PositionCross,
+			"initial_margin":     position.InitialMargin,
+			"maintenance_margin": position.MaintenanceMargin,
+			"current_fee":        position.CurrentFee,
+			"close_vol":          position.CloseVol,
+			"close_avg_price":    position.CloseAvgPrice,
+			"open_avg_price":     position.OpenAvgPrice,
+			"max_notional_value": position.MaxNotionalValue,
+			"position_amount":    position.PositionAmount,
+			"current_amount":     position.CurrentAmount,
+			"mark_value":         position.MarkValue,
+			"current_value":      position.CurrentValue,
 		},
 	}
 }

@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/djpken/go-exc/exchanges/bitmart/requests/rest/contract"
 	responses "github.com/djpken/go-exc/exchanges/bitmart/responses/contract"
@@ -290,12 +291,14 @@ func (c *Contract) GetOrderBook(req contract.GetContractOrderBookRequest) (*resp
 //	    EndTime:   1662518172,
 //	})
 func (c *Contract) GetKline(req contract.GetContractKlineRequest) (*responses.GetContractKlineResponse, error) {
-	endpoint := fmt.Sprintf("/contract/public/kline?symbol=%s&start_time=%d&end_time=%d",
-		req.Symbol, req.StartTime, req.EndTime)
-
+	params := url.Values{}
+	params.Set("symbol", req.Symbol)
+	params.Set("start_time", fmt.Sprintf("%d", req.StartTime))
+	params.Set("end_time", fmt.Sprintf("%d", req.EndTime))
 	if req.Step > 0 {
-		endpoint += fmt.Sprintf("&step=%d", req.Step)
+		params.Set("step", fmt.Sprintf("%d", req.Step))
 	}
+	endpoint := "/contract/public/kline?" + params.Encode()
 
 	var result responses.GetContractKlineResponse
 	if err := c.client.GET(endpoint, &result); err != nil {

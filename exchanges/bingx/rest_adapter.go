@@ -211,6 +211,26 @@ func (a *TradeAPIAdapter) PlaceOrder(_ context.Context, req commontypes.PlaceOrd
 	return a.converter.ConvertOrder(&resp.Data.Order), nil
 }
 
+// PlaceSingleOrder places exactly one order and wraps the result in PlaceOrderResult.
+func (a *TradeAPIAdapter) PlaceSingleOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.PlaceOrderResult, error) {
+	order, err := a.PlaceOrder(ctx, req)
+	if err != nil {
+		return &commontypes.PlaceOrderResult{Error: err}, nil
+	}
+	return &commontypes.PlaceOrderResult{Order: order}, nil
+}
+
+// PlaceMultiOrder places multiple orders sequentially and returns per-order results.
+// BingX has no native batch-order API, so orders are sent one by one.
+func (a *TradeAPIAdapter) PlaceMultiOrder(ctx context.Context, reqs []commontypes.PlaceOrderRequest) ([]*commontypes.PlaceOrderResult, error) {
+	results := make([]*commontypes.PlaceOrderResult, len(reqs))
+	for i, req := range reqs {
+		order, err := a.PlaceOrder(ctx, req)
+		results[i] = &commontypes.PlaceOrderResult{Order: order, Error: err}
+	}
+	return results, nil
+}
+
 func (a *TradeAPIAdapter) CancelOrder(_ context.Context, symbol, orderID string, _ map[string]interface{}) error {
 	var oid int64
 	if orderID != "" {

@@ -3,6 +3,7 @@ package types
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -13,6 +14,18 @@ var (
 	// ErrNotSupported is returned when a feature is not supported by the exchange
 	ErrNotSupported = errors.New("not supported by this exchange")
 )
+
+// APIError represents a structured error returned by an exchange's REST API.
+// Use errors.As to extract it and inspect the Code field.
+type APIError struct {
+	Exchange string
+	Code     int
+	Message  string
+}
+
+func (e *APIError) Error() string {
+	return e.Exchange + " API error: code=" + strconv.Itoa(e.Code) + ", msg=" + e.Message
+}
 
 // ZeroDecimal represents a zero value for Decimal type
 var ZeroDecimal = Decimal{decimal.Zero}

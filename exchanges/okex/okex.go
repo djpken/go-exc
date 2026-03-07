@@ -82,18 +82,16 @@ func (e *OKExExchange) NativeWs() *ws.ClientWs {
 
 // GetConfig gets account configuration
 func (e *OKExExchange) GetConfig(ctx context.Context) (*commontypes.AccountConfig, error) {
-	// Call native OKEx API
 	resp, err := e.client.Rest.Account.GetConfig()
 	if err != nil {
 		return nil, err
 	}
-
-	// Check if we have configs
+	if err := checkAPIError(resp.Basic); err != nil {
+		return nil, err
+	}
 	if len(resp.Configs) == 0 {
 		return nil, nil
 	}
-
-	// Convert to common type
 	converter := NewConverter()
 	return converter.ConvertAccountConfig(resp.Configs[0]), nil
 }
@@ -146,6 +144,16 @@ func (e *OKExExchange) SetLeverage(ctx context.Context, req commontypes.SetLever
 // PlaceOrder places a new order
 func (e *OKExExchange) PlaceOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.Order, error) {
 	return e.restAPI.Trade().PlaceOrder(ctx, req)
+}
+
+// PlaceSingleOrder places exactly one order and returns a PlaceOrderResult.
+func (e *OKExExchange) PlaceSingleOrder(ctx context.Context, req commontypes.PlaceOrderRequest) (*commontypes.PlaceOrderResult, error) {
+	return e.restAPI.Trade().PlaceSingleOrder(ctx, req)
+}
+
+// PlaceMultiOrder places multiple orders and returns per-order results.
+func (e *OKExExchange) PlaceMultiOrder(ctx context.Context, reqs []commontypes.PlaceOrderRequest) ([]*commontypes.PlaceOrderResult, error) {
+	return e.restAPI.Trade().PlaceMultiOrder(ctx, reqs)
 }
 
 // CancelOrder cancels an existing order

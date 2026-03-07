@@ -249,18 +249,18 @@ func (c *Converter) ConvertOrderType(s string) string {
 }
 
 // ConvertOrderStatus converts BingX order status to common status
-func (c *Converter) ConvertOrderStatus(s string) string {
+func (c *Converter) ConvertOrderStatus(s string) commontypes.OrderStatus {
 	switch s {
 	case "NEW", "PENDING":
-		return string(commontypes.OrderStatusOpen)
+		return commontypes.OrderStatusOpen
 	case "PARTIALLY_FILLED":
-		return string(commontypes.OrderStatusPartiallyFilled)
+		return commontypes.OrderStatusPartiallyFilled
 	case "FILLED":
-		return string(commontypes.OrderStatusFilled)
+		return commontypes.OrderStatusFilled
 	case "CANCELED", "CANCELLED":
-		return string(commontypes.OrderStatusCanceled)
+		return commontypes.OrderStatusCanceled
 	default:
-		return s
+		return commontypes.OrderStatus(s)
 	}
 }
 
