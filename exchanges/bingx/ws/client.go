@@ -169,11 +169,21 @@ func (c *ClientWs) readLoop() {
 			}
 		}
 
-		// BingX compresses with GZIP
+		// BingX compresses all messages with GZIP (including "Ping")
 		decompressed, err := decompressGzip(raw)
 		if err != nil {
-			// Server ack messages may not be compressed; try as-is
+			// Not compressed; use as-is
 			decompressed = raw
+		}
+
+		// BingX sends "Ping" (may be gzip-compressed) and expects "Pong" back
+		if string(decompressed) == "Ping" {
+			c.mu.Lock()
+			if c.conn != nil && !c.closed {
+				_ = c.conn.WriteMessage(websocket.TextMessage, []byte("Pong"))
+			}
+			c.mu.Unlock()
+			continue
 		}
 
 		c.dispatch(decompressed)

@@ -43,22 +43,30 @@ func (a *WebSocketAdapter) Close() error {
 
 // ─── Tickers ─────────────────────────────────────────────────────────────────
 
-// tickerMsg is the expected structure of a BingX ticker WebSocket push
+// tickerMsg is the expected structure of a BingX ticker WebSocket push.
+// BingX pushes ticker data nested under "data".
+// NOTE: Go JSON is case-insensitive when matching fields, so uppercase "O"/"C"
+// (timestamps) must be explicitly declared to prevent collision with lowercase
+// "o"/"c" (price strings).
 type tickerMsg struct {
 	DataType string `json:"dataType"`
 	Data     struct {
-		E string `json:"e"`
-		S string `json:"s"`
-		P string `json:"p"` // price change
-		C string `json:"c"` // last price
-		H string `json:"h"` // high
-		L string `json:"l"` // low
-		V string `json:"v"` // volume
-		O string `json:"o"` // open price
-		B string `json:"B"` // best bid price
-		A string `json:"A"` // best ask price
-		// E_ shadows the outer "E" event time field
-		E_ int64 `json:"E"` // event time
+		EventType  string `json:"e"`  // event type
+		EventTime  int64  `json:"E"`  // event time ms (uppercase E)
+		S          string `json:"s"`  // symbol
+		P          string `json:"p"`  // price change amount
+		BigP       string `json:"P"`  // price change percentage (uppercase P)
+		C          string `json:"c"`  // latest transaction price (lowercase c)
+		StatsClose int64  `json:"C"`  // stats end time (uppercase C) — prevents case collision
+		H          string `json:"h"`  // 24h high
+		L          string `json:"l"`  // 24h low
+		V          string `json:"v"`  // trading volume
+		O          string `json:"o"`  // opening price (lowercase o)
+		StatsOpen  int64  `json:"O"`  // stats start time (uppercase O) — prevents case collision
+		B          string `json:"B"`  // best bid price (uppercase B)
+		SmallB     string `json:"b"`  // best bid quantity (lowercase b)
+		A          string `json:"A"`  // best ask price (uppercase A)
+		SmallA     string `json:"a"`  // best ask quantity (lowercase a)
 	} `json:"data"`
 }
 
@@ -82,19 +90,20 @@ func (a *WebSocketAdapter) SubscribeTickers(userCh chan *commontypes.TickerUpdat
 			if err := json.Unmarshal(data, &msg); err != nil {
 				return
 			}
+			d := msg.Data
 			conv := a.converter
 			update := &commontypes.TickerUpdate{
-				Symbol:    msg.Data.S,
-				LastPrice: conv.str(msg.Data.C),
-				High24h:   conv.str(msg.Data.H),
-				Low24h:    conv.str(msg.Data.L),
-				Volume24h: conv.str(msg.Data.V),
-				BidPrice:  conv.str(msg.Data.B),
-				AskPrice:  conv.str(msg.Data.A),
-				Timestamp: commontypes.Timestamp(time.UnixMilli(msg.Data.E_)),
+				Symbol:    d.S,
+				LastPrice: conv.str(d.C),
+				High24h:   conv.str(d.H),
+				Low24h:    conv.str(d.L),
+				Volume24h: conv.str(d.V),
+				BidPrice:  conv.str(d.B),
+				AskPrice:  conv.str(d.A),
+				Timestamp: commontypes.Timestamp(time.UnixMilli(d.EventTime)),
 				Extra: map[string]interface{}{
-					"priceChange": msg.Data.P,
-					"openPrice":   msg.Data.O,
+					"priceChange": d.P,
+					"openPrice":   d.O,
 				},
 			}
 			select {
