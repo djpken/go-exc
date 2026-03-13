@@ -18,28 +18,34 @@ import (
 type Public struct {
 	*ClientWs
 	iCh    chan *public.Instruments
-	tCh    chan *public.Tickers
+	tChs   map[string]chan *public.Tickers                 // instId -> chan
 	oiCh   chan *public.OpenInterest
-	cCh    chan *public.Candlesticks
+	cChs   map[string]chan *public.Candlesticks             // "channel:instId" -> chan
 	trCh   chan *public.Trades
 	edepCh chan *public.EstimatedDeliveryExercisePrice
 	mpCh   chan *public.MarkPrice
-	mpcCh  chan *public.MarkPriceCandlesticks
+	mpcChs map[string]chan *public.MarkPriceCandlesticks    // "channel:instId" -> chan
 	plCh   chan *public.PriceLimit
 	obCh   chan *public.OrderBook
 	osCh   chan *public.OPTIONSummary
 	frCh   chan *public.FundingRate
-	icCh   chan *public.IndexCandlesticks
+	icChs  map[string]chan *public.IndexCandlesticks        // "channel:instId" -> chan
 	itCh   chan *public.IndexTickers
 }
 
 // NewPublic returns a pointer to a fresh Public
 func NewPublic(c *ClientWs) *Public {
-	return &Public{ClientWs: c}
+	return &Public{
+		ClientWs: c,
+		tChs:     make(map[string]chan *public.Tickers),
+		cChs:     make(map[string]chan *public.Candlesticks),
+		mpcChs:   make(map[string]chan *public.MarkPriceCandlesticks),
+		icChs:    make(map[string]chan *public.IndexCandlesticks),
+	}
 }
 
 // Instruments
-// The full instrument list will be pushed for the first time after subscription. Subsequently, the instruments will be pushed if there's any change to the instrument’s state (such as delivery of FUTURES, exercise of OPTION, listing of new contracts / trading pairs, trading suspension, etc.).
+// The full instrument list will be pushed for the first time after subscription. Subsequently, the instruments will be pushed if there's any change to the instrument's state (such as delivery of FUTURES, exercise of OPTION, listing of new contracts / trading pairs, trading suspension, etc.).
 //
 // https://www.okex.com/docs-v5/en/#websocket-api-public-channels-instruments-channel
 func (c *Public) Instruments(req requests.Instruments, ch ...chan *public.Instruments) error {
@@ -68,7 +74,7 @@ func (c *Public) UInstruments(req requests.Instruments, rCh ...bool) error {
 func (c *Public) Tickers(req requests.Tickers, ch ...chan *public.Tickers) error {
 	m := utils.S2M(req)
 	if len(ch) > 0 {
-		c.tCh = ch[0]
+		c.tChs[req.InstID] = ch[0]
 	}
 	return c.Subscribe(false, []constants.ChannelName{"tickers"}, m)
 }
@@ -79,7 +85,7 @@ func (c *Public) Tickers(req requests.Tickers, ch ...chan *public.Tickers) error
 func (c *Public) UTickers(req requests.Tickers, rCh ...bool) error {
 	m := utils.S2M(req)
 	if len(rCh) > 0 && rCh[0] {
-		c.tCh = nil
+		delete(c.tChs, req.InstID)
 	}
 	return c.Unsubscribe(false, []constants.ChannelName{"tickers"}, m)
 }
@@ -114,7 +120,8 @@ func (c *Public) UOpenInterest(req requests.OpenInterest, rCh ...bool) error {
 func (c *Public) Candlesticks(req requests.Candlesticks, ch ...chan *public.Candlesticks) error {
 	m := utils.S2M(req)
 	if len(ch) > 0 {
-		c.cCh = ch[0]
+		key := string(req.Channel) + ":" + req.InstID
+		c.cChs[key] = ch[0]
 	}
 	return c.Subscribe(false, []constants.ChannelName{}, m)
 }
@@ -125,7 +132,8 @@ func (c *Public) Candlesticks(req requests.Candlesticks, ch ...chan *public.Cand
 func (c *Public) UCandlesticks(req requests.Candlesticks, rCh ...bool) error {
 	m := utils.S2M(req)
 	if len(rCh) > 0 && rCh[0] {
-		c.cCh = nil
+		key := string(req.Channel) + ":" + req.InstID
+		delete(c.cChs, key)
 	}
 	return c.Unsubscribe(false, []constants.ChannelName{}, m)
 }
@@ -209,7 +217,8 @@ func (c *Public) MarkPriceCandlesticks(req requests.MarkPriceCandlesticks, ch ..
 	m := utils.S2M(req)
 	m["channel"] = "mark-price-" + m["channel"]
 	if len(ch) > 0 {
-		c.mpcCh = ch[0]
+		key := "mark-price-" + string(req.Channel) + ":" + req.InstID
+		c.mpcChs[key] = ch[0]
 	}
 	return c.Subscribe(false, []constants.ChannelName{}, m)
 }
@@ -221,7 +230,8 @@ func (c *Public) UMarkPriceCandlesticks(req requests.MarkPriceCandlesticks, rCh 
 	m := utils.S2M(req)
 	m["channel"] = "mark-price-" + m["channel"]
 	if len(rCh) > 0 && rCh[0] {
-		c.mpcCh = nil
+		key := "mark-price-" + string(req.Channel) + ":" + req.InstID
+		delete(c.mpcChs, key)
 	}
 	return c.Unsubscribe(false, []constants.ChannelName{}, m)
 }
@@ -332,7 +342,8 @@ func (c *Public) IndexCandlesticks(req requests.IndexCandlesticks, ch ...chan *p
 	m := utils.S2M(req)
 	m["channel"] = req.Channel
 	if len(ch) > 0 {
-		c.icCh = ch[0]
+		key := req.Channel + ":" + req.InstID
+		c.icChs[key] = ch[0]
 	}
 	return c.Subscribe(false, []constants.ChannelName{}, m)
 }
@@ -344,7 +355,8 @@ func (c *Public) UIndexCandlesticks(req requests.IndexCandlesticks, rCh ...bool)
 	m := utils.S2M(req)
 	m["channel"] = req.Channel
 	if len(rCh) > 0 && rCh[0] {
-		c.icCh = nil
+		key := req.Channel + ":" + req.InstID
+		delete(c.icChs, key)
 	}
 	return c.Unsubscribe(false, []constants.ChannelName{}, m)
 }
@@ -380,176 +392,188 @@ func (c *Public) Process(data []byte, e *events.Basic) bool {
 		}
 		switch ch {
 		case "instruments":
-			e := public.Instruments{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.Instruments{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.iCh != nil {
-				c.iCh <- &e
+				c.iCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "tickers":
-			e := public.Tickers{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.Tickers{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
-			if c.tCh != nil {
-				c.tCh <- &e
+			if instIdRaw, ok := e.Arg.Get("instId"); ok {
+				instId := fmt.Sprint(instIdRaw)
+				if tCh, exists := c.tChs[instId]; exists && tCh != nil {
+					tCh <- &ev
+				}
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "open-interest":
-			e := public.OpenInterest{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.OpenInterest{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.oiCh != nil {
-				c.oiCh <- &e
+				c.oiCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "trades":
-			e := public.Trades{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.Trades{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.trCh != nil {
-				c.trCh <- &e
+				c.trCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "estimated-price":
-			e := public.EstimatedDeliveryExercisePrice{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.EstimatedDeliveryExercisePrice{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.edepCh != nil {
-				c.edepCh <- &e
+				c.edepCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "mark-price":
-			e := public.MarkPrice{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.MarkPrice{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.mpCh != nil {
-				c.mpCh <- &e
+				c.mpCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "price-limit":
-			e := public.PriceLimit{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.PriceLimit{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.plCh != nil {
-				c.plCh <- &e
+				c.plCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "opt-summary":
-			e := public.OPTIONSummary{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.OPTIONSummary{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.osCh != nil {
-				c.osCh <- &e
+				c.osCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "funding-rate":
-			e := public.FundingRate{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.FundingRate{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.frCh != nil {
-				c.frCh <- &e
+				c.frCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		case "index-tickers":
-			e := public.IndexTickers{}
-			if err := json.Unmarshal(data, &e); err != nil {
+			ev := public.IndexTickers{}
+			if err := json.Unmarshal(data, &ev); err != nil {
 				return false
 			}
 			if c.itCh != nil {
-				c.itCh <- &e
+				c.itCh <- &ev
 			}
 			if c.StructuredEventChan != nil {
-				c.StructuredEventChan <- e
+				c.StructuredEventChan <- ev
 			}
 			return true
 		default:
 			chName := fmt.Sprint(ch)
 			if strings.Contains(chName, "mark-price-candle") {
-				e := public.MarkPriceCandlesticks{}
-				if err := json.Unmarshal(data, &e); err != nil {
+				ev := public.MarkPriceCandlesticks{}
+				if err := json.Unmarshal(data, &ev); err != nil {
 					return false
 				}
-				if c.mpcCh != nil {
-					c.mpcCh <- &e
+				if instIdRaw, ok := e.Arg.Get("instId"); ok {
+					key := chName + ":" + fmt.Sprint(instIdRaw)
+					if mpcCh, exists := c.mpcChs[key]; exists && mpcCh != nil {
+						mpcCh <- &ev
+					}
 				}
 				if c.StructuredEventChan != nil {
-					c.StructuredEventChan <- e
+					c.StructuredEventChan <- ev
 				}
 				return true
 			}
 			if strings.Contains(chName, "index-candle") {
-				e := public.IndexCandlesticks{}
-				if err := json.Unmarshal(data, &e); err != nil {
+				ev := public.IndexCandlesticks{}
+				if err := json.Unmarshal(data, &ev); err != nil {
 					return false
 				}
-				if c.icCh != nil {
-					c.icCh <- &e
+				if instIdRaw, ok := e.Arg.Get("instId"); ok {
+					key := chName + ":" + fmt.Sprint(instIdRaw)
+					if icCh, exists := c.icChs[key]; exists && icCh != nil {
+						icCh <- &ev
+					}
 				}
 				if c.StructuredEventChan != nil {
-					c.StructuredEventChan <- e
+					c.StructuredEventChan <- ev
 				}
 				return true
 			}
 			if strings.Contains(chName, "candle") {
-				e := public.Candlesticks{}
-				if err := json.Unmarshal(data, &e); err != nil {
+				ev := public.Candlesticks{}
+				if err := json.Unmarshal(data, &ev); err != nil {
 					return false
 				}
-				if c.cCh != nil {
-					c.cCh <- &e
+				if instIdRaw, ok := e.Arg.Get("instId"); ok {
+					key := chName + ":" + fmt.Sprint(instIdRaw)
+					if cCh, exists := c.cChs[key]; exists && cCh != nil {
+						cCh <- &ev
+					}
 				}
 				if c.StructuredEventChan != nil {
-					c.StructuredEventChan <- e
+					c.StructuredEventChan <- ev
 				}
 				return true
 			}
 			if strings.Contains(chName, "books") {
-				e := public.OrderBook{}
-				if err := json.Unmarshal(data, &e); err != nil {
+				ev := public.OrderBook{}
+				if err := json.Unmarshal(data, &ev); err != nil {
 					return false
 				}
 				if c.obCh != nil {
-					c.obCh <- &e
+					c.obCh <- &ev
 				}
 				if c.StructuredEventChan != nil {
-					c.StructuredEventChan <- e
+					c.StructuredEventChan <- ev
 				}
 				return true
 			}

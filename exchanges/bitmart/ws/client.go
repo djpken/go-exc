@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,6 +51,10 @@ type ClientWs struct {
 	subscriptionsMu sync.RWMutex
 	connCtx         context.Context
 	connCancel      context.CancelFunc
+
+	// Rate limiting for subscriptions (prevents BitMart from dropping rapid-fire messages)
+	subThrottle sync.Mutex
+	lastSubTime time.Time
 }
 
 // Config interface for BitMart WebSocket configuration
@@ -203,6 +208,29 @@ func (c *ClientWs) Login() error {
 
 // Subscribe subscribes to a channel
 func (c *ClientWs) Subscribe(channel string) error {
+	// Rate limit: ensure at least 100ms between individual subscription messages
+	// to prevent BitMart from dropping rapid-fire subscriptions.
+	c.subThrottle.Lock()
+	if elapsed := time.Since(c.lastSubTime); !c.lastSubTime.IsZero() && elapsed < 100*time.Millisecond {
+		time.Sleep(100*time.Millisecond - elapsed)
+	}
+	c.lastSubTime = time.Now()
+	c.subThrottle.Unlock()
+
+	return c.sendSubscribe([]string{channel})
+}
+
+// SubscribeBatch subscribes to multiple channels in a single WebSocket message.
+// Preferred over calling Subscribe in a loop — no per-message delay, no rate-limit risk.
+func (c *ClientWs) SubscribeBatch(channels []string) error {
+	if len(channels) == 0 {
+		return nil
+	}
+	return c.sendSubscribe(channels)
+}
+
+// sendSubscribe sends a subscribe message with the given channels and tracks them.
+func (c *ClientWs) sendSubscribe(channels []string) error {
 	c.mu.RLock()
 	if !c.isConnected {
 		c.mu.RUnlock()
@@ -214,20 +242,21 @@ func (c *ClientWs) Subscribe(channel string) error {
 	// BitMart v2 API uses "action" instead of "op"
 	subscribeMsg := map[string]interface{}{
 		"action": "subscribe",
-		"args":   []string{channel},
+		"args":   channels,
 	}
 
 	err := conn.WriteJSON(subscribeMsg)
 	if err == nil {
-		// Track subscription for resubscription on reconnect
+		// Track subscriptions for resubscription on reconnect
 		c.subscriptionsMu.Lock()
-		c.subscriptions = append(c.subscriptions, channel)
+		c.subscriptions = append(c.subscriptions, channels...)
 		c.subscriptionsMu.Unlock()
 
-		c.emitSubscribeEvent(channel)
-		c.emitSystemMessage("subscription", fmt.Sprintf("Subscribed to %s", channel), false)
+		for _, ch := range channels {
+			c.emitSubscribeEvent(ch)
+		}
 	} else {
-		c.emitSystemError("subscription", fmt.Sprintf("Failed to subscribe to %s: %v", channel, err), false)
+		c.emitSystemError("subscription", fmt.Sprintf("Failed to subscribe to %v: %v", channels, err), false)
 	}
 
 	return err
@@ -444,13 +473,9 @@ func (c *ClientWs) resubscribe() {
 	c.subscriptions = []string{}
 	c.subscriptionsMu.Unlock()
 
-	// Re-subscribe to each saved subscription
-	for _, channel := range subs {
-		time.Sleep(100 * time.Millisecond) // Rate limit subscriptions
-		err := c.Subscribe(channel)
-		if err != nil {
-			c.emitSystemError("subscription", fmt.Sprintf("Failed to re-subscribe to %s: %v", channel, err), false)
-		}
+	// Batch re-subscribe all channels in a single WS message
+	if err := c.SubscribeBatch(subs); err != nil {
+		c.emitSystemError("subscription", fmt.Sprintf("Failed to re-subscribe (%d channels): %v", len(subs), err), false)
 	}
 
 	c.emitSystemMessage("subscription", "Re-subscription complete", false)
@@ -477,9 +502,6 @@ func (c *ClientWs) processMessage(message []byte) {
 		fmt.Printf("Failed to unmarshal message: %v\n", err)
 		return
 	}
-
-	// Debug: print raw message to understand format
-	// fmt.Printf("\n[WS RAW] %s\n", string(message))
 
 	// Handle pong response
 	if event, ok := msg["event"].(string); ok && event == "pong" {
@@ -521,20 +543,22 @@ func (c *ClientWs) processMessage(message []byte) {
 	}
 
 	if channelKey != "" {
+		// Strip frequency suffix (e.g. "@100ms") that server appends to channel names
+		if idx := strings.Index(channelKey, "@"); idx != -1 {
+			channelKey = channelKey[:idx]
+		}
 		// fmt.Printf("[WS] Routing to handler: %s\n", channelKey)
 		c.mu.RLock()
 		handler, exists := c.handlers[channelKey]
 		c.mu.RUnlock()
 
 		if exists {
-			// fmt.Printf("[WS] Handler found, executing\n")
 			handler(message)
 		} else {
-			// fmt.Printf("[WS] No handler for channel: %s\n", channelKey)
-			// fmt.Printf("[WS] Available handlers: %v\n", c.getHandlerKeys())
+			fmt.Printf("[WS] No handler for channel: %s | registered: %v\n", channelKey, c.getHandlerKeys())
 		}
 	} else {
-		// fmt.Printf("[WS] No 'table' or 'group' field in message\n")
+		fmt.Printf("[WS] No 'table' or 'group' field in message: %s\n", string(message))
 	}
 }
 

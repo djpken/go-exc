@@ -80,7 +80,7 @@ func (a *MarketAPIAdapter) GetCandles(_ context.Context, req commontypes.GetCand
 		endMs = req.EndTime.UnixMilli()
 	}
 
-	resp, err := a.client.Market.GetKlines(req.Symbol, interval, startMs, endMs, req.Limit)
+	resp, err := a.client.Market.GetKlines(req.Symbol, interval, startMs, endMs, req.Limit, 0)
 	if err != nil {
 		return nil, err
 	}

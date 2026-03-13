@@ -107,11 +107,13 @@ type KlinesResponse struct {
 
 // GetKlines retrieves candlestick/kline data (v3)
 // GET /openApi/swap/v3/quote/klines
-func (m *Market) GetKlines(symbol, interval string, startTime, endTime int64, limit int) (*KlinesResponse, error) {
+// timeZone: 0 = UTC+0, 8 = UTC+8 (default 8)
+func (m *Market) GetKlines(symbol, interval string, startTime, endTime int64, limit int, timeZone int32) (*KlinesResponse, error) {
 	var result KlinesResponse
 	params := map[string]string{
 		"symbol":   symbol,
 		"interval": interval,
+		"timeZone": fmt.Sprintf("%d", timeZone),
 	}
 	if startTime > 0 {
 		params["startTime"] = fmt.Sprintf("%d", startTime)
@@ -135,7 +137,7 @@ type ContractInfo struct {
 	Size              string `json:"size"`
 	QuantityPrecision int    `json:"quantityPrecision"`
 	PricePrecision    int    `json:"pricePrecision"`
-	FeeRate           string `json:"feeRate"`
+	FeeRate           float64 `json:"feeRate"`
 	TradeMinLimit     int    `json:"tradeMinLimit"`
 	MaxLongLeverage   int    `json:"maxLongLeverage"`
 	MaxShortLeverage  int    `json:"maxShortLeverage"`

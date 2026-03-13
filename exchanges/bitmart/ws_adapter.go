@@ -55,22 +55,28 @@ func (a *WebSocketAdapter) SubscribeTickers(userCh chan *commontypes.TickerUpdat
 		}
 	}
 
-	// Subscribe to each symbol
-	for _, symbol := range symbols {
-		// Create internal channel for this symbol
-		internalCh := make(chan *publicevents.FuturesTickerEvent, 100)
-
-		// Subscribe to BitMart ticker channel
-		if err := a.client.Public.SubscribeFuturesTicker(symbol, internalCh); err != nil {
-			return fmt.Errorf("failed to subscribe to %s: %w", symbol, err)
+	// Use batch subscribe when multiple symbols to send a single WS message,
+	// avoiding BitMart rate limiting from rapid-fire individual subscriptions.
+	if len(symbols) > 1 {
+		internalCh := make(chan *publicevents.FuturesTickerEvent, 200*len(symbols))
+		if err := a.client.Public.SubscribeFuturesTickerBatch(symbols, internalCh); err != nil {
+			return fmt.Errorf("failed to batch subscribe tickers: %w", err)
 		}
-
-		// Store the user channel
-		a.tickerChannels[symbol] = userCh
-
-		// Start goroutine to convert and forward events
-		go a.forwardTickerEvents(symbol, internalCh, userCh)
+		for _, symbol := range symbols {
+			a.tickerChannels[symbol] = userCh
+		}
+		// Single goroutine drains internalCh to avoid N goroutines competing on the same channel.
+		go a.forwardTickerEvents("batch", internalCh, userCh)
+		return nil
 	}
+
+	// Single symbol: use individual subscribe (rate-limited internally).
+	internalCh := make(chan *publicevents.FuturesTickerEvent, 100)
+	if err := a.client.Public.SubscribeFuturesTicker(symbols[0], internalCh); err != nil {
+		return fmt.Errorf("failed to subscribe to %s: %w", symbols[0], err)
+	}
+	a.tickerChannels[symbols[0]] = userCh
+	go a.forwardTickerEvents(symbols[0], internalCh, userCh)
 
 	return nil
 }

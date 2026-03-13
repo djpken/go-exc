@@ -27,11 +27,13 @@ func NewPublic(c *ClientWs) *Public {
 // Channel: spot/ticker:{symbol}
 // Note: For futures ticker, use SubscribeFuturesTicker instead
 func (p *Public) SubscribeTicker(symbol string, ch ...chan *public.TickerEvent) error {
+	var targetCh chan *public.TickerEvent
 	if len(ch) > 0 {
-		p.tickerCh = ch[0]
+		targetCh = ch[0]
 	} else {
-		p.tickerCh = make(chan *public.TickerEvent, 100)
+		targetCh = make(chan *public.TickerEvent, 100)
 	}
+	p.tickerCh = targetCh
 
 	// Convert symbol format: BTC_USDT -> BTCUSDT (remove underscore)
 	normalizedSymbol := normalizeSymbol(symbol)
@@ -45,7 +47,7 @@ func (p *Public) SubscribeTicker(symbol string, ch ...chan *public.TickerEvent) 
 			return
 		}
 		select {
-		case p.tickerCh <- &event:
+		case targetCh <- &event:
 		default:
 			// Channel full, drop message
 		}
@@ -59,11 +61,13 @@ func (p *Public) SubscribeTicker(symbol string, ch ...chan *public.TickerEvent) 
 // Channel: futures/ticker:{symbol}
 // Note: BitMart v2 API uses futures channels and symbol format without underscore (e.g., BTCUSDT)
 func (p *Public) SubscribeFuturesTicker(symbol string, ch ...chan *public.FuturesTickerEvent) error {
+	var targetCh chan *public.FuturesTickerEvent
 	if len(ch) > 0 {
-		p.futuresTickerCh = ch[0]
+		targetCh = ch[0]
 	} else {
-		p.futuresTickerCh = make(chan *public.FuturesTickerEvent, 100)
+		targetCh = make(chan *public.FuturesTickerEvent, 100)
 	}
+	p.futuresTickerCh = targetCh
 
 	// Convert symbol format: BTC_USDT -> BTCUSDT (remove underscore)
 	normalizedSymbol := normalizeSymbol(symbol)
@@ -78,13 +82,50 @@ func (p *Public) SubscribeFuturesTicker(symbol string, ch ...chan *public.Future
 			return
 		}
 		select {
-		case p.futuresTickerCh <- &event:
+		case targetCh <- &event:
 		default:
 			// Channel full, drop message
 		}
 	})
 
 	return p.Subscribe(channel)
+}
+
+// SubscribeFuturesTickerBatch subscribes to multiple futures ticker channels in a single
+// WebSocket message. All events are forwarded to the shared ch channel.
+// Preferred over calling SubscribeFuturesTicker in a loop when subscribing many symbols.
+func (p *Public) SubscribeFuturesTickerBatch(symbols []string, ch chan *public.FuturesTickerEvent) error {
+	if len(symbols) == 0 {
+		return nil
+	}
+	if ch == nil {
+		ch = make(chan *public.FuturesTickerEvent, 100*len(symbols))
+	}
+	p.futuresTickerCh = ch
+
+	channels := make([]string, len(symbols))
+	for i, symbol := range symbols {
+		normalizedSymbol := normalizeSymbol(symbol)
+		channel := fmt.Sprintf("futures/ticker:%s", normalizedSymbol)
+		channels[i] = channel
+
+		// Each symbol needs its own handler closure; all forward to the shared ch.
+		capturedCh := ch
+		p.RegisterHandler(channel, func(data []byte) {
+			var event public.FuturesTickerEvent
+			if err := json.Unmarshal(data, &event); err != nil {
+				fmt.Printf("Failed to unmarshal futures ticker batch event: %v\n", err)
+				return
+			}
+			select {
+			case capturedCh <- &event:
+			default:
+				// Channel full, drop message
+			}
+		})
+	}
+
+	return p.SubscribeBatch(channels)
 }
 
 // UnsubscribeTicker unsubscribes from ticker channel (legacy spot ticker)
@@ -113,11 +154,13 @@ func (p *Public) UnsubscribeFuturesTicker(symbol string) error {
 // Depth: 5, 20, 50
 // Note: BitMart v2 API uses futures channels and symbol format without underscore (e.g., BTCUSDT)
 func (p *Public) SubscribeDepth(symbol string, depth int, ch ...chan *public.DepthEvent) error {
+	var targetCh chan *public.DepthEvent
 	if len(ch) > 0 {
-		p.depthCh = ch[0]
+		targetCh = ch[0]
 	} else {
-		p.depthCh = make(chan *public.DepthEvent, 100)
+		targetCh = make(chan *public.DepthEvent, 100)
 	}
+	p.depthCh = targetCh
 
 	// Convert symbol format: BTC_USDT -> BTCUSDT (remove underscore)
 	normalizedSymbol := normalizeSymbol(symbol)
@@ -131,7 +174,7 @@ func (p *Public) SubscribeDepth(symbol string, depth int, ch ...chan *public.Dep
 			return
 		}
 		select {
-		case p.depthCh <- &event:
+		case targetCh <- &event:
 		default:
 			// Channel full, drop message
 		}
@@ -155,11 +198,13 @@ func (p *Public) UnsubscribeDepth(symbol string, depth int) error {
 // Channel: futures/trade:{symbol}
 // Note: BitMart v2 API uses futures channels and symbol format without underscore (e.g., BTCUSDT)
 func (p *Public) SubscribeTrade(symbol string, ch ...chan *public.TradeEvent) error {
+	var targetCh chan *public.TradeEvent
 	if len(ch) > 0 {
-		p.tradeCh = ch[0]
+		targetCh = ch[0]
 	} else {
-		p.tradeCh = make(chan *public.TradeEvent, 100)
+		targetCh = make(chan *public.TradeEvent, 100)
 	}
+	p.tradeCh = targetCh
 
 	// Convert symbol format: BTC_USDT -> BTCUSDT (remove underscore)
 	normalizedSymbol := normalizeSymbol(symbol)
@@ -173,7 +218,7 @@ func (p *Public) SubscribeTrade(symbol string, ch ...chan *public.TradeEvent) er
 			return
 		}
 		select {
-		case p.tradeCh <- &event:
+		case targetCh <- &event:
 		default:
 			// Channel full, drop message
 		}
@@ -198,11 +243,13 @@ func (p *Public) UnsubscribeTrade(symbol string) error {
 // Step: 1m, 3m, 5m, 15m, 30m, 45m, 1H, 2H, 3H, 4H, 1D, 1W, 1M
 // Note: BitMart v2 API uses futures channels and symbol format without underscore (e.g., BTCUSDT)
 func (p *Public) SubscribeKline(symbol string, step string, ch ...chan *public.KlineEvent) error {
+	var targetCh chan *public.KlineEvent
 	if len(ch) > 0 {
-		p.klineCh = ch[0]
+		targetCh = ch[0]
 	} else {
-		p.klineCh = make(chan *public.KlineEvent, 100)
+		targetCh = make(chan *public.KlineEvent, 100)
 	}
+	p.klineCh = targetCh
 
 	// Convert symbol format: BTC_USDT -> BTCUSDT (remove underscore)
 	normalizedSymbol := normalizeSymbol(symbol)
@@ -216,7 +263,7 @@ func (p *Public) SubscribeKline(symbol string, step string, ch ...chan *public.K
 			return
 		}
 		select {
-		case p.klineCh <- &event:
+		case targetCh <- &event:
 		default:
 			// Channel full, drop message
 		}
