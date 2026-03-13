@@ -132,18 +132,29 @@ func (m *Market) GetKlines(symbol, interval string, startTime, endTime int64, li
 
 // ContractInfo holds information about a single perpetual swap contract
 type ContractInfo struct {
-	ContractID        string `json:"contractId"`
-	Symbol            string `json:"symbol"`
-	Size              string `json:"size"`
-	QuantityPrecision int    `json:"quantityPrecision"`
-	PricePrecision    int    `json:"pricePrecision"`
+	ContractID        string  `json:"contractId"`
+	Symbol            string  `json:"symbol"`
+	Size              string  `json:"size"`
+	QuantityPrecision int     `json:"quantityPrecision"`
+	PricePrecision    int     `json:"pricePrecision"`
 	FeeRate           float64 `json:"feeRate"`
-	TradeMinLimit     int    `json:"tradeMinLimit"`
-	MaxLongLeverage   int    `json:"maxLongLeverage"`
-	MaxShortLeverage  int    `json:"maxShortLeverage"`
-	Currency          string `json:"currency"`
-	Asset             string `json:"asset"`
-	Status            int    `json:"status"`
+	MakerFeeRate      float64 `json:"makerFeeRate"`
+	TakerFeeRate      float64 `json:"takerFeeRate"`
+	TradeMinLimit     float64 `json:"tradeMinLimit"`
+	TradeMinQuantity  float64 `json:"tradeMinQuantity"`
+	TradeMinUSDT      float64 `json:"tradeMinUSDT"`
+	Currency          string  `json:"currency"`
+	Asset             string  `json:"asset"`
+	Status            int     `json:"status"`
+	APIStateOpen      string  `json:"apiStateOpen"`
+	APIStateClose     string  `json:"apiStateClose"`
+	EnsureTrigger     bool    `json:"ensureTrigger"`
+	TriggerFeeRate    string  `json:"triggerFeeRate"`
+	BrokerState       bool    `json:"brokerState"`
+	LaunchTime        int64   `json:"launchTime"`
+	MaintainTime      int64   `json:"maintainTime"`
+	OffTime           int64   `json:"offTime"`
+	DisplayName       string  `json:"displayName"`
 }
 
 // ContractsResponse is the full API response for contract info

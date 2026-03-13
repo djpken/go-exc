@@ -274,7 +274,7 @@ func (c *Converter) ConvertInstrument(ci *rest.ContractInfo) *commontypes.Instru
 		BaseCurrency:      ci.Asset,
 		QuoteCurrency:     ci.Currency,
 		InstrumentType:    commontypes.InstrumentSwap,
-		MaxLever:          ci.MaxLongLeverage,
+		MaxLever:          0,
 		CtVal:             c.str(ci.Size),
 		PricePrecision:    commontypes.NewDecimalFromInt(int64(ci.PricePrecision)),
 		QuantityPrecision: commontypes.NewDecimalFromInt(int64(ci.QuantityPrecision)),
